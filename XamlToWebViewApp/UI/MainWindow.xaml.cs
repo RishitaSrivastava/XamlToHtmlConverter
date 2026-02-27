@@ -45,6 +45,7 @@ namespace XamlToWebViewApp
 
                 MessageBox.Show(filePath);
 
+
                 if (!File.Exists(filePath))
                 {
                     MessageBox.Show(
@@ -70,6 +71,7 @@ namespace XamlToWebViewApp
                 // 4️⃣ Display in WebView
                 await Preview.EnsureCoreWebView2Async();
                 Preview.NavigateToString(html);
+                //MessageBox.Show(html);
             }
             catch (Exception ex)
             {
