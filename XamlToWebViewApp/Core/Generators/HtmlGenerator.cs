@@ -1,71 +1,30 @@
-﻿using System.Text;
-using XamlToWebViewApp.Core.IR;
+﻿using XamlToWebViewApp.Core.IR;
+using XamlToWebViewApp.Core.Rendering;
 
 namespace XamlToWebViewApp.Core.Generators
 {
     /// <summary>
-    /// Converts IR elements into HTML markup.
-    /// Supports recursive rendering.
+    /// Generates final HTML document from IR tree.
+    /// Delegates element rendering to registered renderers.
     /// </summary>
     public class HtmlGenerator
     {
         /// <summary>
-        /// Generates complete HTML from IR
+        /// Generates complete HTML page from IR root element.
         /// </summary>
         public string Generate(IrElement root)
         {
-            var sb = new StringBuilder();
+            var renderer =
+                RendererFactory.GetRenderer(root.Type);
 
-            BuildHtml(root, sb);
+            string body = renderer.Render(root);
 
-            return WrapHtml(sb.ToString());
+            return WrapHtml(body);
         }
 
-        // Recursively build HTML
-        private void BuildHtml(IrElement element, StringBuilder sb)
-        {
-            switch (element.Type)
-            {
-                case "Button":
-                    sb.Append($"<button>{GetText(element)}</button>");
-                    break;
-
-                case "TextBlock":
-                    sb.Append($"<span>{GetText(element)}</span>");
-                    break;
-
-                case "StackPanel":
-                    sb.Append("<div style='display:flex;flex-direction:column;'>");
-                    break;
-
-                default:
-                    sb.Append("<div>");
-                    break;
-            }
-
-            // Render children
-            foreach (var child in element.Children)
-            {
-                BuildHtml(child, sb);
-            }
-
-            // Close tag
-            sb.Append("</div>");
-        }
-
-        // Get display text
-        private string GetText(IrElement element)
-        {
-            if (element.Properties.TryGetValue("Content", out var content))
-                return content;
-
-            if (element.Properties.TryGetValue("Text", out var text))
-                return text;
-
-            return string.Empty;
-        }
-
-        // Wrap in full HTML document
+        /// <summary>
+        /// Wraps generated HTML body inside full HTML document.
+        /// </summary>
         private string WrapHtml(string body)
         {
             return $@"
