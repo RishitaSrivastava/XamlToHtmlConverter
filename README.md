@@ -24,7 +24,7 @@ XAML → XElement → IR → Renderers → HTML → WebView2
 - IrBuilder
 - Converts parsed XML into a neutral UI model independent of output format.
 
-### 🔹 3. Rendering Engine
+### 3. Rendering Engine
 - IElementRenderer
 - RendererFactory
 - RendererAttribute
