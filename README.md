@@ -29,9 +29,9 @@ XAML → XElement → IR → Renderers → HTML → WebView2
 - RendererFactory
 - RendererAttribute
 - Component-specific renderers:
-- ButtonRenderer
-- TextBlockRenderer
-- StackPanelRenderer
+  - ButtonRenderer
+  - TextBlockRenderer
+  - StackPanelRenderer
 
 Renderers are automatically discovered using attribute-based registration (reflection), enabling plugin-style extensibility.
 
