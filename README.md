@@ -63,3 +63,15 @@ Run tests using:
 
 ```bash
 dotnet test
+
+---
+
+## Modifications
+
+"Refactor rendering architecture and add debug HTML logging
+
+- Introduced modular renderer architecture
+- Added constants for XAML element names
+- Improved StackPanel layout rendering
+- Added debug logging to inspect generated HTML
+"
