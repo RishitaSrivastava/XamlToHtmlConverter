@@ -1,6 +1,7 @@
-﻿using Xunit;
+﻿using XamlToWebViewApp.Core.Common;
 using XamlToWebViewApp.Core.Generators;
 using XamlToWebViewApp.Core.IR;
+using Xunit;
 
 namespace XamlToWebViewApp.Tests.Generators
 {
@@ -17,7 +18,8 @@ namespace XamlToWebViewApp.Tests.Generators
             // Arrange
             var ir = new IrElement
             {
-                Type = "Button"
+                //Type = "Button"
+                Type = XamlElementConstants.Button
             };
 
             ir.Properties["Content"] = "Click Me";

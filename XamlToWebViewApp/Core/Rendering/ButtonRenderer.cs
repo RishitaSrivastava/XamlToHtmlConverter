@@ -1,4 +1,5 @@
-﻿using XamlToWebViewApp.Core.IR;
+﻿using System.Windows.Shapes;
+using XamlToWebViewApp.Core.IR;
 
 namespace XamlToWebViewApp.Core.Rendering
 {
@@ -7,7 +8,12 @@ namespace XamlToWebViewApp.Core.Rendering
     /// </summary>
     /// <param name="Button">Intermediate representation node.</param>
     /// <returns>Generated HTML string.</returns>
-    [Renderer("Button")]
+
+    //[Renderer("Button")]
+    //Updated hardcoded strings "Button", move them into constants so they are reusable and easier to maintain.
+    using XamlToWebViewApp.Core.Common;
+
+    [Renderer(XamlElementConstants.Button)]
     public class ButtonRenderer : IElementRenderer
     {
         public string Render(IrElement element)

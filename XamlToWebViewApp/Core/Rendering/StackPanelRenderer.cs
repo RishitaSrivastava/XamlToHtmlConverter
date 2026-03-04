@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using XamlToWebViewApp.Core.Common;
 using XamlToWebViewApp.Core.IR;
 
 namespace XamlToWebViewApp.Core.Rendering
@@ -6,7 +7,9 @@ namespace XamlToWebViewApp.Core.Rendering
     /// <summary>
     /// Converts StackPanel into HTML flex container.
     /// </summary>
-    [Renderer("StackPanel")]
+    
+    //[Renderer("StackPanel")]
+    [Renderer(XamlElementConstants.StackPanel)]
     public class StackPanelRenderer : IElementRenderer
     {
         public string Render(IrElement element)

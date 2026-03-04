@@ -79,6 +79,13 @@ namespace XamlToWebViewApp
 
                     File.WriteAllText(tempFile, html);
 
+#if DEBUG
+                    //MessageBox.Show(html);
+                    System.Diagnostics.Debug.WriteLine("----- Generated HTML -----");
+                    System.Diagnostics.Debug.WriteLine(html);
+                    System.Diagnostics.Debug.WriteLine("--------------------------");
+#endif
+
                     // Navigate using file URL (VERY STABLE)
                     Preview.CoreWebView2.Navigate(new Uri(tempFile).AbsoluteUri);
                 }

@@ -45,7 +45,8 @@ namespace XamlToWebViewApp.Core.Rendering
         }
 
         /// <summary>
-        /// Returns renderer for given element type.
+        /// Returns the renderer associated with the given XAML element type.
+        /// If no renderer is found, a default renderer is returned.
         /// </summary>
         public static IElementRenderer GetRenderer(string type)
         {
