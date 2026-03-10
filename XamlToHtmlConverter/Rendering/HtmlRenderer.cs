@@ -2,6 +2,8 @@
 
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
+using XamlToHtmlConverter.Rendering.ControlRenderers;
+using XamlToHtmlConverter.Rendering.Templates;
 
 namespace XamlToHtmlConverter.Rendering
 {
@@ -12,6 +14,9 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class HtmlRenderer
     {
+        
+
+        
         #region Private Data
 
         /// <summary>
@@ -39,6 +44,10 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         private readonly StyleRegistry v_StyleRegistry = new();
 
+
+        private readonly ControlRendererRegistry v_ControlRegistry;
+
+        private readonly TemplateEngine v_TemplateEngine = new();
         #endregion
 
         #region Constructors
@@ -54,13 +63,16 @@ namespace XamlToHtmlConverter.Rendering
             IElementTagMapper tagMapper,
             IEnumerable<ILayoutRenderer> layoutRenderers,
             IStyleBuilder styleBuilder,
-            IEventExtractor eventExtractor)
+            IEventExtractor eventExtractor,
+            ControlRendererRegistry controlRegistry)
         {
             v_TagMapper = tagMapper;
             v_LayoutRenderers = layoutRenderers;
             v_StyleBuilder = styleBuilder;
             v_EventExtractor = eventExtractor;
+            v_ControlRegistry = controlRegistry;
         }
+
 
         #endregion
 
@@ -115,9 +127,13 @@ namespace XamlToHtmlConverter.Rendering
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
             sb.Append($"{indentation}<{tag}");
-            if (element.Type == "ListBox")
+            var controlRenderer = v_ControlRegistry.Resolve(element);
+            Console.WriteLine($"Renderer for {element.Type}: {controlRenderer?.GetType().Name}");
+            Console.WriteLine("Element type = " + element.Type);
+
+            if (controlRenderer != null)
             {
-                sb.Append(" multiple");
+                controlRenderer.RenderAttributes(element, sb);
             }
 
             // Emit data-binding-* attributes
@@ -134,47 +150,7 @@ namespace XamlToHtmlConverter.Rendering
             {
                 sb.Append($" {evt.Key}=\"{evt.Value}\"");
             }
-            // ---- TextBox special handling ----
-            if (element.Type == "TextBox")
-            {
-                sb.Append(" type=\"text\"");
-
-                if (element.Properties.TryGetValue("Text", out var text))
-                {
-                    var trimmed = text.Trim();
-
-                    bool isBinding =
-                        trimmed.StartsWith("{Binding") &&
-                        trimmed.EndsWith("}");
-
-                    if (!isBinding)
-                    {
-                        sb.Append($" value=\"{text}\"");
-                    }
-                }
-            }
-            // CheckBox handling
-            else if (element.Type == "CheckBox")
-            {
-                sb.Append(" type=\"checkbox\"");
-
-                if (element.Properties.TryGetValue("IsChecked", out var isChecked) &&
-                    string.Equals(isChecked, "True", StringComparison.OrdinalIgnoreCase))
-                {
-                    sb.Append(" checked");
-                }
-            }
-            // RadioButton handling
-            else if (element.Type == "RadioButton")
-            {
-                sb.Append(" type=\"radio\"");
-
-                if (element.Properties.TryGetValue("IsChecked", out var isChecked) &&
-                    string.Equals(isChecked, "True", StringComparison.OrdinalIgnoreCase))
-                {
-                    sb.Append(" checked");
-                }
-            }
+           
 
             // Apply CSS class (deduplicated style)
             if (!string.IsNullOrWhiteSpace(style))
@@ -205,8 +181,16 @@ namespace XamlToHtmlConverter.Rendering
             }
 
             sb.Append(">");
+            controlRenderer?.RenderContent(
+            element,
+            sb,
+            indent,
+            (child, builder, childIndent) =>
+            {
+                RenderElement(child, builder, childIndent, element.Type, parentOrientation);
+            });
 
-            
+
 
             var content = ResolveElementContent(element);
 
@@ -215,11 +199,11 @@ namespace XamlToHtmlConverter.Rendering
                 sb.Append(content);
             }
 
-
             // Render children recursively
             if (element.Children.Count > 0)
             {
                 sb.AppendLine();
+
                 for (int i = 0; i < element.Children.Count; i++)
                 {
                     var child = element.Children[i];
@@ -232,50 +216,7 @@ namespace XamlToHtmlConverter.Rendering
                         orientation = o;
                     }
 
-                    // TextBlock ? TextBox ? label
-                    if (child.Type == "TextBlock" &&
-                        i + 1 < element.Children.Count &&
-                        element.Children[i + 1].Type == "TextBox")
-                    {
-                        var labelText = child.InnerText ?? "";
-
-                        sb.AppendLine($"{new string(' ', indent + 2)}<label>{labelText}</label>");
-
-                        continue;
-                    }
-
-                    // Flatten ItemsControl.Items
-                    if (child.Type == "ItemsControl.Items")
-                    {
-                        foreach (var item in child.Children)
-                        {
-                            RenderElement(item, sb, indent + 2, element.Type, orientation);
-                        }
-                    }
-
-                    // Handle ItemTemplate
-                    else if (child.Type == "ItemsControl.ItemTemplate")
-                    {
-                        foreach (var templateNode in child.Children)
-                        {
-                            if (templateNode.Type == "DataTemplate")
-                            {
-                                sb.AppendLine($"{new string(' ', indent + 2)}<template>");
-
-                                foreach (var templateChild in templateNode.Children)
-                                {
-                                    RenderElement(templateChild, sb, indent + 4, element.Type, orientation);
-                                }
-
-                                sb.AppendLine($"{new string(' ', indent + 2)}</template>");
-                            }
-                        }
-                    }
-
-                    else
-                    {
-                        RenderElement(child, sb, indent + 2, element.Type, orientation);
-                    }
+                    RenderElement(child, sb, indent + 2, element.Type, orientation);
                 }
 
                 sb.Append(indentation);
@@ -297,14 +238,12 @@ namespace XamlToHtmlConverter.Rendering
             var sb = new StringBuilder();
 
             // Apply layout container behavior (Grid, StackPanel, DockPanel, etc.)
-            foreach (var layout in v_LayoutRenderers)
-            {
-                if (layout.CanHandle(element))
-                {
-                    layout.ApplyLayout(element, sb);
-                    break;
-                }
-            }
+            var renderer = v_LayoutRenderers
+                .Where(r => r.CanHandle(element))
+                .OrderByDescending(r => r.Priority)
+                .FirstOrDefault();
+
+            renderer?.ApplyLayout(element, sb);
 
             // Apply property-based styling (width, margin, alignment, grid positioning, etc.)
             var context = new LayoutContext(parentLayoutType, parentOrientation);
@@ -324,6 +263,16 @@ namespace XamlToHtmlConverter.Rendering
                 return content;
 
             return null;
+        }
+
+        internal void RenderChild(
+        IntermediateRepresentationElement element,
+        StringBuilder sb,
+        int indent,
+        string? parentLayoutType,
+        string? parentOrientation)
+        {
+            RenderElement(element, sb, indent, parentLayoutType, parentOrientation);
         }
 
         #endregion

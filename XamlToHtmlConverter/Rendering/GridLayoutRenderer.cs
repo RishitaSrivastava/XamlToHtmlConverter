@@ -12,6 +12,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class GridLayoutRenderer : ILayoutRenderer
     {
+        public int Priority => 100;
         #region Public Methods
 
         /// <summary>
@@ -168,6 +169,8 @@ namespace XamlToHtmlConverter.Rendering
             return value;
         }
 
+
+       
         #endregion
     }
 }

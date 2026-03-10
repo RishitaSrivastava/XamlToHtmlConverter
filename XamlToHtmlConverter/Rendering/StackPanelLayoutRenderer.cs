@@ -12,6 +12,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class StackPanelLayoutRenderer : ILayoutRenderer
     {
+        public int Priority => 80;
         #region Public Methods
 
         /// <summary>

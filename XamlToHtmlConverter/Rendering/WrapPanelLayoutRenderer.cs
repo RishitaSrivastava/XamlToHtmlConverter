@@ -12,6 +12,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class WrapPanelLayoutRenderer : ILayoutRenderer
     {
+        public int Priority => 60;
         #region Public Methods
 
         /// <summary>
@@ -33,14 +34,17 @@ namespace XamlToHtmlConverter.Rendering
             styleBuilder.Append("display:flex;");
             styleBuilder.Append("flex-wrap:wrap;");
 
-            var orientation = "Horizontal";
-            if (element.Properties.TryGetValue("Orientation", out var o))
-                orientation = o;
+            var direction = "row";
 
-            if (string.Equals(orientation, "Vertical", StringComparison.OrdinalIgnoreCase))
-                styleBuilder.Append("flex-direction:column;");
-            else
-                styleBuilder.Append("flex-direction:row;");
+            if (element.Properties.TryGetValue("Orientation", out var orientation))
+            {
+                if (string.Equals(orientation, "Vertical", StringComparison.OrdinalIgnoreCase))
+                {
+                    direction = "column";
+                }
+            }
+
+            styleBuilder.Append($"flex-direction:{direction};");
         }
 
         #endregion

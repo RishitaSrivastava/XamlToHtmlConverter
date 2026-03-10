@@ -23,13 +23,11 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="element"/> is null.</exception>
     public IntermediateRepresentationElement Convert(XElement element)
     {
-        if (element == null)
-            throw new ArgumentNullException(nameof(element));
-
         var root = ConvertElement(element);
 
-        // Second pass: resolve StaticResource references and propagate DataContext
         ResolveStaticResources(root);
+
+        DataContextPropagator.Propagate(root, null);
 
         return root;
     }
@@ -72,7 +70,23 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
             if (IsAttachedProperty(name))
                 ir.AttachedProperties[name] = value;
             else
-                ir.Properties[name] = value;
+            {
+                var binding = BindingParser.Parse(value);
+
+                if (binding != null)
+                {
+                    ir.Bindings[name] = binding;
+
+                    if (name == "DataContext")
+                    {
+                        ir.DataContext = binding.Path;
+                    }
+                }
+                else
+                {
+                    ir.Properties[name] = value;
+                }
+            }
         }
     }
 
@@ -146,6 +160,23 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
                     var widthAttr = colDef.Attribute("Width");
                     if (widthAttr != null)
                         ir.GridColumnDefinitions.Add(widthAttr.Value);
+                }
+
+                continue;
+            }
+
+            if (child.Name.LocalName.EndsWith(".ItemTemplate"))
+            {
+                var dataTemplate = child.Elements().FirstOrDefault();
+
+                if (dataTemplate != null)
+                {
+                    var templateRoot = dataTemplate.Elements().FirstOrDefault();
+
+                    if (templateRoot != null)
+                    {
+                        ir.ItemTemplate = ConvertElement(templateRoot);
+                    }
                 }
 
                 continue;

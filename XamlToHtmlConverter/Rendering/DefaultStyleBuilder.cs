@@ -1,7 +1,9 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+using System;
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
+using XamlToHtmlConverter.Rendering.StyleMappers;
 
 namespace XamlToHtmlConverter.Rendering
 {
@@ -12,6 +14,16 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class DefaultStyleBuilder : IStyleBuilder
     {
+        private readonly PropertyMapperEngine v_PropertyEngine;
+        public DefaultStyleBuilder()
+        {
+            v_PropertyEngine = new PropertyMapperEngine(new IPropertyMapper[]
+            {
+        new WidthMapper(),
+        new HeightMapper()
+            });
+        }
+
         #region Public Methods
 
         /// <summary>
@@ -25,8 +37,8 @@ namespace XamlToHtmlConverter.Rendering
         public string Build(IntermediateRepresentationElement element, LayoutContext context)
         {
             var sb = new StringBuilder();
-            ApplyStandardProperties(element, sb);
-            ApplyAttachedProperties(element, sb);
+            v_PropertyEngine.Apply(element, context, sb);
+            ApplyAttachedProperties(element, context, sb);
             ApplyAlignment(element, context, sb);
             return sb.ToString();
         }
@@ -44,37 +56,13 @@ namespace XamlToHtmlConverter.Rendering
         {
             var result = new Dictionary<string, string>();
 
-            foreach (var prop in element.Properties)
+            foreach (var binding in element.Bindings)
             {
-                var value = prop.Value.Trim();
-                if (string.IsNullOrWhiteSpace(value))
-                    continue;
+                var path = binding.Value.Path;
 
-                if (value.StartsWith("{Binding") && value.EndsWith("}"))
+                if (!string.IsNullOrWhiteSpace(path))
                 {
-                    var inner = value.Substring(8, value.Length - 9).Trim();
-                    string? path = null;
-
-                    if (inner.Contains("Path=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var parts = inner.Split(',');
-                        foreach (var part in parts)
-                        {
-                            var trimmed = part.Trim();
-                            if (trimmed.StartsWith("Path=", StringComparison.OrdinalIgnoreCase))
-                            {
-                                path = trimmed.Substring(5).Trim();
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        path = inner.Split(',')[0].Trim();
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(path))
-                        result[$"data-binding-{prop.Key.ToLower()}"] = path;
+                    result[$"data-binding-{binding.Key.ToLower()}"] = path;
                 }
             }
 
@@ -92,7 +80,10 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         /// <param name="element">The IR element to read properties from.</param>
         /// <param name="sb">The string builder to append CSS to.</param>
-        private void ApplyStandardProperties(IntermediateRepresentationElement element, StringBuilder sb)
+        private void ApplyStandardProperties(
+    IntermediateRepresentationElement element,
+    LayoutContext context,
+    StringBuilder sb)
         {
             if (element.Properties.TryGetValue("Visibility", out var visibility))
             {
@@ -135,6 +126,13 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Properties.TryGetValue("Padding", out var padding))
                 sb.Append($"padding:{ConvertThickness(padding)};");
+
+            // WrapPanel item sizing support
+            if (context.ParentLayoutType == "WrapPanel")
+            {
+                sb.Append("width:var(--wrap-item-width,auto);");
+                sb.Append("height:var(--wrap-item-height,auto);");
+            }
         }
 
         /// <summary>
@@ -143,7 +141,7 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         /// <param name="element">The IR element to read attached properties from.</param>
         /// <param name="sb">The string builder to append CSS to.</param>
-        private void ApplyAttachedProperties(IntermediateRepresentationElement element, StringBuilder sb)
+        private void ApplyAttachedProperties(IntermediateRepresentationElement element, LayoutContext context, StringBuilder sb)
         {
             // Grid row positioning
             if (element.AttachedProperties.TryGetValue("Grid.RowSpan", out var rowSpan)
@@ -179,6 +177,34 @@ namespace XamlToHtmlConverter.Rendering
             {
                 sb.Append($"z-index:{z};");
             }
+
+            // DockPanel positioning
+            if (element.AttachedProperties.TryGetValue("DockPanel.Dock", out var dock))
+            {
+                switch (dock)
+                {
+                    case "Top":
+                        sb.Append("align-self:stretch;");
+                        break;
+
+                    case "Bottom":
+                        sb.Append("align-self:stretch;margin-top:auto;");
+                        break;
+
+                    case "Left":
+                        sb.Append("align-self:flex-start;");
+                        break;
+
+                    case "Right":
+                        sb.Append("align-self:flex-end;");
+                        break;
+                }
+            }
+            // LastChildFill behavior
+            if (context.ParentLayoutType == "DockPanel")
+            {
+                sb.Append("flex:1;");
+            }
         }
 
         /// <summary>
@@ -189,48 +215,54 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="element">The IR element whose alignment properties are evaluated.</param>
         /// <param name="context">The layout context of the parent container.</param>
         /// <param name="sb">The string builder to append CSS to.</param>
-        private void ApplyAlignment(IntermediateRepresentationElement element, LayoutContext context, StringBuilder sb)
+        private void ApplyAlignment(
+    IntermediateRepresentationElement element,
+    LayoutContext context,
+    StringBuilder styleBuilder)
         {
-            if (string.Equals(context.ParentLayoutType, "Grid", StringComparison.OrdinalIgnoreCase))
-            {
-                if (element.Properties.TryGetValue("HorizontalAlignment", out var hAlign))
-                {
-                    var css = ConvertAlignment(hAlign);
-                    if (css != null)
-                        sb.Append($"justify-self:{css};");
-                }
+            if (context.ParentLayoutType == null)
+                return;
 
-                if (element.Properties.TryGetValue("VerticalAlignment", out var vAlign))
-                {
-                    var css = ConvertAlignment(vAlign);
-                    if (css != null)
-                        sb.Append($"align-self:{css};");
-                }
+            element.Properties.TryGetValue("HorizontalAlignment", out var hAlign);
+            element.Properties.TryGetValue("VerticalAlignment", out var vAlign);
+
+            // GRID ALIGNMENT
+            if (context.ParentLayoutType == "Grid")
+            {
+                styleBuilder.Append($"justify-self:{ConvertAlignment(hAlign)};");
+                styleBuilder.Append($"align-self:{ConvertAlignment(vAlign)};");
                 return;
             }
 
-            if (string.Equals(context.ParentLayoutType, "StackPanel", StringComparison.OrdinalIgnoreCase))
+            // STACKPANEL
+            if (context.ParentLayoutType == "StackPanel")
             {
                 var orientation = context.ParentOrientation ?? "Vertical";
 
-                if (string.Equals(orientation, "Vertical", StringComparison.OrdinalIgnoreCase))
+                if (orientation == "Vertical")
                 {
-                    if (element.Properties.TryGetValue("HorizontalAlignment", out var hAlign))
-                    {
-                        var css = ConvertAlignment(hAlign);
-                        if (css != null)
-                            sb.Append($"align-self:{css};");
-                    }
+                    // Cross axis = horizontal
+                    if (!string.IsNullOrWhiteSpace(hAlign))
+                        styleBuilder.Append($"align-self:{ConvertAlignment(hAlign)};");
                 }
                 else
                 {
-                    if (element.Properties.TryGetValue("VerticalAlignment", out var vAlign))
-                    {
-                        var css = ConvertAlignment(vAlign);
-                        if (css != null)
-                            sb.Append($"align-self:{css};");
-                    }
+                    // Cross axis = vertical
+                    if (!string.IsNullOrWhiteSpace(vAlign))
+                        styleBuilder.Append($"align-self:{ConvertAlignment(vAlign)};");
                 }
+
+                return;
+            }
+
+            // WRAPPANEL
+            if (context.ParentLayoutType == "WrapPanel")
+            {
+                if (!string.IsNullOrWhiteSpace(hAlign))
+                    styleBuilder.Append($"align-self:{ConvertAlignment(hAlign)};");
+
+                if (!string.IsNullOrWhiteSpace(vAlign))
+                    styleBuilder.Append($"align-self:{ConvertAlignment(vAlign)};");
             }
         }
 
@@ -240,16 +272,20 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         /// <param name="value">The XAML alignment value (e.g., Left, Right, Center, Stretch).</param>
         /// <returns>The CSS keyword (e.g., start, end, center), or <c>null</c> for Stretch or unrecognized values.</returns>
-        private string? ConvertAlignment(string value)
+        private string ConvertAlignment(string? alignment)
         {
-            return value switch
+            if (string.IsNullOrWhiteSpace(alignment))
+                return "stretch";
+
+            return alignment switch
             {
-                "Left"    => "start",
-                "Right"   => "end",
-                "Top"     => "start",
-                "Bottom"  => "end",
-                "Center"  => "center",
-                _         => null
+                "Left" => "start",
+                "Top" => "start",
+                "Right" => "end",
+                "Bottom" => "end",
+                "Center" => "center",
+                "Stretch" => "stretch",
+                _ => "stretch"
             };
         }
 
@@ -259,26 +295,43 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         /// <param name="thickness">The raw XAML Thickness string (e.g., "10", "10,5", "10,5,10,5").</param>
         /// <returns>The equivalent CSS margin or padding value string (e.g., "10px", "5px 10px").</returns>
-        private string ConvertThickness(string thickness)
+        private string ConvertThickness(string value)
         {
-            var parts = thickness.Split(',');
+            if (string.IsNullOrWhiteSpace(value))
+                return "0";
+
+            var parts = value.Split(',');
 
             if (parts.Length == 1)
-                return $"{parts[0]}px";
+            {
+                if (int.TryParse(parts[0], out var all))
+                    return $"{all}px";
+            }
 
             if (parts.Length == 2)
-                return $"{parts[1]}px {parts[0]}px";
+            {
+                if (int.TryParse(parts[0], out var vertical) &&
+                    int.TryParse(parts[1], out var horizontal))
+                {
+                    return $"{vertical}px {horizontal}px";
+                }
+            }
 
             if (parts.Length == 4)
             {
-                var left   = parts[0];
-                var top    = parts[1];
-                var right  = parts[2];
-                var bottom = parts[3];
-                return $"{top}px {right}px {bottom}px {left}px";
+                var values = new List<string>();
+
+                foreach (var p in parts)
+                {
+                    if (int.TryParse(p, out var px))
+                        values.Add($"{px}px");
+                }
+
+                if (values.Count == 4)
+                    return string.Join(" ", values);
             }
 
-            return thickness;
+            return value;
         }
 
         #endregion

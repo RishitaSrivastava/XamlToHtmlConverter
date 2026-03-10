@@ -11,6 +11,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public interface ILayoutRenderer
     {
+        int Priority { get; }
         /// <summary>
         /// Determines whether this renderer can handle the specified IR element.
         /// </summary>

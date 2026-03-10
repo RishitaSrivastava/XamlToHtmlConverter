@@ -13,6 +13,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class DockPanelLayoutRenderer : ILayoutRenderer
     {
+        public int Priority => 70;
         #region Public Methods
 
         /// <summary>
@@ -34,21 +35,29 @@ namespace XamlToHtmlConverter.Rendering
         {
             styleBuilder.Append("display:flex;");
 
+            // Default direction
+            var direction = "row";
+
             foreach (var child in element.Children)
             {
                 if (child.AttachedProperties.TryGetValue("DockPanel.Dock", out var dock))
                 {
                     if (dock == "Top" || dock == "Bottom")
                     {
-                        styleBuilder.Append("flex-direction:column;");
-                        return;
+                        direction = "column";
+                        break;
+                    }
+
+                    if (dock == "Left" || dock == "Right")
+                    {
+                        direction = "row";
+                        break;
                     }
                 }
             }
 
-            styleBuilder.Append("flex-direction:row;");
+            styleBuilder.Append($"flex-direction:{direction};");
         }
-
         #endregion
     }
 }

@@ -69,6 +69,11 @@ public class IntermediateRepresentationElement
     /// </summary>
     public IntermediateRepresentationElement? Template { get; set; }
 
+    public Dictionary<string, IntermediateRepresentationBinding> Bindings { get; } = new();
+
+    public string? DataContext { get; set; }
+    public IntermediateRepresentationElement? ItemTemplate { get; set; }
+
     #endregion
 
     #region Constructors

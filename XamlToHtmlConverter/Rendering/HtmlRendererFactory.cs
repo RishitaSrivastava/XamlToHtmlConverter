@@ -1,5 +1,8 @@
 ﻿// Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+using XamlToHtmlConverter.Rendering.ControlRenderers;
+using XamlToHtmlConverter.Rendering.Controls;
+
 namespace XamlToHtmlConverter.Rendering
 {
     /// <summary>
@@ -23,14 +26,26 @@ namespace XamlToHtmlConverter.Rendering
                 new GridLayoutRenderer(),
                 new StackPanelLayoutRenderer(),
                 new DockPanelLayoutRenderer(),
-                new WrapPanelLayoutRenderer()
+                new WrapPanelLayoutRenderer(),
+                
             };
+
+            var controlRegistry = new ControlRendererRegistry(new IControlRenderer[]
+            {
+                new TextBoxRenderer(),
+                new CheckBoxRenderer(),
+                new ListBoxRenderer(),
+                new ItemsControlRenderer()
+            });
+
+
 
             return new HtmlRenderer(
                 new DefaultElementTagMapper(),
                 layouts,
                 new DefaultStyleBuilder(),
-                new DefaultEventExtractor()
+                new DefaultEventExtractor(),
+                controlRegistry
             );
         }
 
