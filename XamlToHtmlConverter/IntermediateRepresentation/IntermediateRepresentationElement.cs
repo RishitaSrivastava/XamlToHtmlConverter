@@ -74,6 +74,10 @@ public class IntermediateRepresentationElement
     public string? DataContext { get; set; }
     public IntermediateRepresentationElement? ItemTemplate { get; set; }
 
+    public List<IntermediateRepresentationTrigger> Triggers { get; } = new();
+
+    public List<IntermediateRepresentationMultiTrigger> MultiTriggers { get; }
+    = new();
     #endregion
 
     #region Constructors

@@ -2,6 +2,7 @@
 
 using System.Xml.Linq;
 using XamlToHtmlConverter.IntermediateRepresentation;
+using XamlToHtmlConverter.Parsing.PropertyElements;
 
 namespace XamlToHtmlConverter.Parsing;
 
@@ -12,6 +13,20 @@ namespace XamlToHtmlConverter.Parsing;
 /// </summary>
 public class XmlToIrConverterRecursive : IXmlToIrConverter
 {
+
+    private readonly PropertyElementHandlerEngine propertyHandlers;
+
+    public XmlToIrConverterRecursive()
+    {
+        propertyHandlers = new PropertyElementHandlerEngine(new IPropertyElementHandler[]
+        {
+        new GridDefinitionHandler(),
+        new StyleHandler(),
+        new ItemTemplateHandler(),
+        new ResourceHandler(),
+        new TemplateHandler(),
+        });
+    }
     #region Public Methods
 
     /// <summary>
@@ -116,76 +131,213 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
     {
         foreach (var child in element.Elements())
         {
-            var childName = child.Name.LocalName;
-
-            // Handle Resources property elements
-            if (child.Name.LocalName.EndsWith(".Resources"))
-            {
-                ParseResources(child, ir);
+            if (propertyHandlers.TryHandle(child, ir, ConvertElement))
                 continue;
-            }
 
-            // Handle Template property elements
-            if (childName.EndsWith(".Template"))
-            {
-                var templateElement = child.Elements().FirstOrDefault();
-                if (templateElement != null)
-                {
-                    var templateIr = ConvertElement(templateElement);
-                    templateIr.Parent = ir;
-                    ir.Template = templateIr;
-                }
-
-                continue;
-            }
-
-            // Handle Grid.RowDefinitions
-            if (childName == "Grid.RowDefinitions")
-            {
-                foreach (var rowDef in child.Elements())
-                {
-                    var heightAttr = rowDef.Attribute("Height");
-                    if (heightAttr != null)
-                        ir.GridRowDefinitions.Add(heightAttr.Value);
-                }
-
-                continue;
-            }
-
-            // Handle Grid.ColumnDefinitions
-            if (childName == "Grid.ColumnDefinitions")
-            {
-                foreach (var colDef in child.Elements())
-                {
-                    var widthAttr = colDef.Attribute("Width");
-                    if (widthAttr != null)
-                        ir.GridColumnDefinitions.Add(widthAttr.Value);
-                }
-
-                continue;
-            }
-
-            if (child.Name.LocalName.EndsWith(".ItemTemplate"))
-            {
-                var dataTemplate = child.Elements().FirstOrDefault();
-
-                if (dataTemplate != null)
-                {
-                    var templateRoot = dataTemplate.Elements().FirstOrDefault();
-
-                    if (templateRoot != null)
-                    {
-                        ir.ItemTemplate = ConvertElement(templateRoot);
-                    }
-                }
-
-                continue;
-            }
-
-            // Normal child elements
             var childIr = ConvertElement(child);
             childIr.Parent = ir;
             ir.Children.Add(childIr);
+        }
+        //foreach (var child in element.Elements())
+        //{
+        //    var childName = child.Name.LocalName;
+
+        //    // Handle Resources property elements
+        //    if (child.Name.LocalName.EndsWith(".Resources"))
+        //    {
+        //        ParseResources(child, ir);
+        //        continue;
+        //    }
+
+        //    // Handle Template property elements
+        //    if (childName.EndsWith(".Template"))
+        //    {
+        //        var templateElement = child.Elements().FirstOrDefault();
+        //        if (templateElement != null)
+        //        {
+        //            var templateIr = ConvertElement(templateElement);
+        //            templateIr.Parent = ir;
+        //            ir.Template = templateIr;
+        //        }
+
+        //        continue;
+        //    }
+
+        //    // Handle Grid.RowDefinitions
+        //    if (childName == "Grid.RowDefinitions")
+        //    {
+        //        foreach (var rowDef in child.Elements())
+        //        {
+        //            var heightAttr = rowDef.Attribute("Height");
+        //            if (heightAttr != null)
+        //                ir.GridRowDefinitions.Add(heightAttr.Value);
+        //        }
+
+        //        continue;
+        //    }
+
+        //    // Handle Grid.ColumnDefinitions
+        //    if (childName == "Grid.ColumnDefinitions")
+        //    {
+        //        foreach (var colDef in child.Elements())
+        //        {
+        //            var widthAttr = colDef.Attribute("Width");
+        //            if (widthAttr != null)
+        //                ir.GridColumnDefinitions.Add(widthAttr.Value);
+        //        }
+
+        //        continue;
+        //    }
+
+        //    if (child.Name.LocalName.EndsWith(".ItemTemplate"))
+        //    {
+        //        var dataTemplate = child.Elements().FirstOrDefault();
+
+        //        if (dataTemplate != null)
+        //        {
+        //            var templateRoot = dataTemplate.Elements().FirstOrDefault();
+
+        //            if (templateRoot != null)
+        //            {
+        //                ir.ItemTemplate = ConvertElement(templateRoot);
+        //            }
+        //        }
+
+        //        continue;
+        //    }
+
+        //    if (childName == "Style.Triggers")
+        //    {
+        //        foreach (var triggerNode in child.Elements())
+        //        {
+        //            if (triggerNode.Name.LocalName == "Trigger")
+        //            {
+        //                var trigger = new IntermediateRepresentationTrigger();
+
+        //                trigger.Property =
+        //                    triggerNode.Attribute("Property")?.Value ?? "";
+
+        //                trigger.Value =
+        //                    triggerNode.Attribute("Value")?.Value ?? "";
+
+        //                foreach (var setter in triggerNode.Elements())
+        //                {
+        //                    if (setter.Name.LocalName != "Setter")
+        //                        continue;
+
+        //                    var prop =
+        //                        setter.Attribute("Property")?.Value;
+
+        //                    var val =
+        //                        setter.Attribute("Value")?.Value;
+
+        //                    if (prop != null && val != null)
+        //                        trigger.Setters[prop] = val;
+        //                }
+
+        //                ir.Triggers.Add(trigger);
+        //            }
+        //        }
+
+        //        continue;
+        //    }
+        //    if (childName.EndsWith(".Style"))
+        //    {
+        //        var styleNode = child.Elements().FirstOrDefault();
+
+        //        if (styleNode != null)
+        //        {
+        //            ParseStyle(styleNode, ir);
+        //        }
+
+        //        continue;
+        //    }
+
+        //    // Normal child elements
+        //    var childIr = ConvertElement(child);
+        //    childIr.Parent = ir;
+        //    ir.Children.Add(childIr);
+        //}
+    }
+
+    private void ParseStyle(
+    XElement styleNode,
+    IntermediateRepresentationElement ir)
+    {
+        foreach (var child in styleNode.Elements())
+        {
+            var name = child.Name.LocalName;
+
+            if (name == "Style.Triggers")
+            {
+                foreach (var triggerNode in child.Elements())
+                {
+                    var nodeName = triggerNode.Name.LocalName;
+
+                    // NORMAL TRIGGER
+                    if (nodeName == "Trigger")
+                    {
+                        var trigger = new IntermediateRepresentationTrigger();
+
+                        trigger.Property =
+                            triggerNode.Attribute("Property")?.Value ?? "";
+
+                        trigger.Value =
+                            triggerNode.Attribute("Value")?.Value ?? "";
+
+                        foreach (var setter in triggerNode.Elements())
+                        {
+                            if (setter.Name.LocalName != "Setter")
+                                continue;
+
+                            var prop = setter.Attribute("Property")?.Value;
+                            var val = setter.Attribute("Value")?.Value;
+
+                            if (prop != null && val != null)
+                                trigger.Setters[prop] = val;
+                        }
+
+                        ir.Triggers.Add(trigger);
+                    }
+
+                    // MULTI TRIGGER
+                    else if (nodeName == "MultiTrigger")
+                    {
+                        var multi = new IntermediateRepresentationMultiTrigger();
+
+                        var conditionsNode = triggerNode
+                            .Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "MultiTrigger.Conditions");
+
+                        if (conditionsNode != null)
+                        {
+                            foreach (var cond in conditionsNode.Elements())
+                            {
+                                var prop = cond.Attribute("Property")?.Value;
+                                var val = cond.Attribute("Value")?.Value;
+
+                                if (prop != null && val != null)
+                                    multi.Conditions.Add((prop, val));
+                            }
+                        }
+
+                        foreach (var setter in triggerNode.Elements())
+                        {
+                            if (setter.Name.LocalName != "Setter")
+                                continue;
+
+                            var prop = setter.Attribute("Property")?.Value;
+                            var val = setter.Attribute("Value")?.Value;
+
+                            if (prop != null && val != null)
+                                multi.Setters[prop] = val;
+                        }
+
+                        ir.MultiTriggers.Add(multi);
+                    }
+                }
+            }
+            
         }
     }
 

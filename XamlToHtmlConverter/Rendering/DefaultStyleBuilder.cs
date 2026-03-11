@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Rendering.StyleMappers;
+using XamlToHtmlConverter.Rendering.Triggers;
 
 namespace XamlToHtmlConverter.Rendering
 {
@@ -62,9 +63,36 @@ namespace XamlToHtmlConverter.Rendering
 
                 if (!string.IsNullOrWhiteSpace(path))
                 {
-                    result[$"data-binding-{binding.Key.ToLower()}"] = path;
+                                var key = binding.Key;
+
+                                if (key == "IsSelected")
+                                    key = "selected";
+                                else if (key == "IsChecked")
+                                    key = "checked";
+                                else if (key == "IsEnabled")
+                                    key = "enabled";
+                                else if (key == "Visibility")
+                                    key = "visibility";
+                                else
+                                    key = key.ToLower();
+
+                                result[$"data-binding-{key}"] = path;
                 }
             }
+            foreach (var trigger in element.Triggers)
+            {
+                var key = $"data-trigger-{trigger.Property.ToLower()}";
+
+                var setterString = string.Join(";",
+                    trigger.Setters.Select(s => $"{s.Key}:{s.Value}"));
+
+                result[key] = $"{trigger.Value}:{setterString}";
+            }
+
+            var multi = TriggerEngine.ExtractMultiTriggers(element);
+
+            foreach (var m in multi)
+                result[m.Key] = m.Value;
 
             return result;
         }

@@ -1,10 +1,186 @@
-<ListBox ItemsSource="{Binding Users}">
-    <ListBox.ItemTemplate>
-        <DataTemplate>
-            <StackPanel>
-                <TextBlock Text="{Binding Name}" />
-                <TextBlock Text="{Binding Email}" />
+<Window
+    Title="User Management Dashboard"
+    Width="1200"
+    Height="800"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+
+    <Window.Resources>
+
+        <Style x:Key="SectionHeader">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Margin" Value="0,10,0,10"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton">
+            <Setter Property="Margin" Value="5"/>
+            <Style.Triggers>
+
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsEnabled" Value="True"/>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Opacity" Value="0.9"/>
+                </MultiTrigger>
+
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <DockPanel>
+
+        <!-- Top Header -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10">
+
+            <TextBlock Text="User Management System"
+                       Style="{StaticResource SectionHeader}"/>
+
+        </StackPanel>
+
+        <!-- Sidebar -->
+        <StackPanel DockPanel.Dock="Left" Width="200" Margin="10">
+
+            <Button Content="Dashboard" Click="Dashboard_Click"/>
+            <Button Content="Users" Click="Users_Click"/>
+            <Button Content="Settings" Click="Settings_Click"/>
+            <Button Content="Reports" Click="Reports_Click"/>
+
+        </StackPanel>
+
+        <!-- Main Content -->
+        <Grid Margin="10">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Search Area -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+
+                <TextBlock Text="Search:" Margin="0,0,10,0"/>
+
+                <TextBox Width="200"
+                         Text="{Binding SearchText}"/>
+
+                <Button Content="Search"
+                        Command="{Binding SearchCommand}"
+                        Style="{StaticResource PrimaryButton}"/>
+
+                <Button Content="Reset"
+                        Command="{Binding ResetCommand}"
+                        Style="{StaticResource PrimaryButton}"/>
+
             </StackPanel>
-        </DataTemplate>
-    </ListBox.ItemTemplate>
-</ListBox>
+
+            <!-- User List -->
+            <Grid Grid.Row="1">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ListBox -->
+                <ListBox Grid.Column="0"
+                         ItemsSource="{Binding Users}"
+                         Margin="10">
+
+                    <ListBox.ItemTemplate>
+
+                        <DataTemplate>
+
+                            <Border Margin="5">
+
+                                <StackPanel>
+
+                                    <TextBlock Text="{Binding Name}"/>
+
+                                    <TextBlock Text="{Binding Email}"/>
+
+                                    <StackPanel Orientation="Horizontal">
+
+                                        <Button Content="Edit"
+                                                Command="{Binding EditUserCommand}"/>
+
+                                        <Button Content="Delete"
+                                                Command="{Binding DeleteUserCommand}"/>
+
+                                    </StackPanel>
+
+                                </StackPanel>
+
+                            </Border>
+
+                        </DataTemplate>
+
+                    </ListBox.ItemTemplate>
+
+                </ListBox>
+
+                <!-- Details Panel -->
+                <StackPanel Grid.Column="1" Margin="10">
+
+                    <TextBlock Text="User Details"
+                               Style="{StaticResource SectionHeader}"/>
+
+                    <StackPanel>
+
+                        <TextBlock Text="Name"/>
+                        <TextBox Text="{Binding SelectedUser.Name}"/>
+
+                        <TextBlock Text="Email"/>
+                        <TextBox Text="{Binding SelectedUser.Email}"/>
+
+                        <TextBlock Text="Role"/>
+                        <TextBox Text="{Binding SelectedUser.Role}"/>
+
+                        <CheckBox Content="Active"
+                                  IsChecked="{Binding SelectedUser.IsActive}"/>
+
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+
+                        <Button Content="Save"
+                                Command="{Binding SaveUserCommand}"
+                                Style="{StaticResource PrimaryButton}"/>
+
+                        <Button Content="Cancel"
+                                Command="{Binding CancelEditCommand}"
+                                Style="{StaticResource PrimaryButton}"/>
+
+                    </StackPanel>
+
+                </StackPanel>
+
+            </Grid>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="10">
+
+                <TextBlock Text="Total Users:" Margin="5"/>
+
+                <TextBlock Text="{Binding UserCount}" Margin="5"/>
+
+                <Button Content="Load More"
+                        Command="{Binding LoadMoreUsersCommand}"
+                        Style="{StaticResource PrimaryButton}"/>
+
+            </StackPanel>
+
+        </Grid>
+
+    </DockPanel>
+
+</Window>

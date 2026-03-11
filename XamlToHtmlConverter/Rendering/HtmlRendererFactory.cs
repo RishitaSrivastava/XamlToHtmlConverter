@@ -1,5 +1,7 @@
 ﻿// Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+using XamlToHtmlConverter.Rendering.Behavior;
+using XamlToHtmlConverter.Rendering.Behavior.Handlers;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
 using XamlToHtmlConverter.Rendering.Controls;
 
@@ -38,6 +40,16 @@ namespace XamlToHtmlConverter.Rendering
                 new ItemsControlRenderer()
             });
 
+            var behaviorRegistry = new BehaviorRegistry(new IBehaviorHandler[]
+            {
+                new ClickBehavior(),
+                new EnabledBehavior(),
+                new VisibilityBehavior(),
+                new CommandBehavior(),
+                new CheckedBehavior(),
+                new SelectedBehavior(),
+                new TriggerBehavior()
+            });
 
 
             return new HtmlRenderer(
@@ -45,7 +57,8 @@ namespace XamlToHtmlConverter.Rendering
                 layouts,
                 new DefaultStyleBuilder(),
                 new DefaultEventExtractor(),
-                controlRegistry
+                controlRegistry,
+                behaviorRegistry
             );
         }
 

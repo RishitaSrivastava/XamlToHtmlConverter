@@ -3,6 +3,8 @@
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Parsing;
 using XamlToHtmlConverter.Rendering;
+using XamlToHtmlConverter.Rendering.Behavior;
+using XamlToHtmlConverter.Rendering.Behavior.Handlers;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
 using XamlToHtmlConverter.Rendering.Controls;
 
@@ -46,27 +48,7 @@ internal class Program
         var irOutputPath = Path.Combine(AppContext.BaseDirectory, "Ir.xml");
         irDoc.Save(irOutputPath);
 
-        var layouts = new List<ILayoutRenderer>
-            {
-                new GridLayoutRenderer(),
-                new StackPanelLayoutRenderer(),
-                new DockPanelLayoutRenderer(),
-                new WrapPanelLayoutRenderer()
-            };
-        var controlRegistry = new ControlRendererRegistry(new IControlRenderer[]
-        {
-            new TextBoxRenderer(),
-            new CheckBoxRenderer(),
-            new ItemsControlRenderer(),
-            new ListBoxRenderer()
-
-        });
-        var renderer = new HtmlRenderer(
-            new DefaultElementTagMapper(),
-            layouts,
-            new DefaultStyleBuilder(),
-            new DefaultEventExtractor(),
-            controlRegistry);
+        var renderer = HtmlRendererFactory.Create();
 
         var html = renderer.RenderDocument(ir);
         var htmlOutputPath = Path.Combine(AppContext.BaseDirectory, "output.html");

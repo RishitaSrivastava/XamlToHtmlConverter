@@ -2,6 +2,7 @@
 
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
+using XamlToHtmlConverter.Rendering.Behavior;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
 using XamlToHtmlConverter.Rendering.Templates;
 
@@ -48,6 +49,8 @@ namespace XamlToHtmlConverter.Rendering
         private readonly ControlRendererRegistry v_ControlRegistry;
 
         private readonly TemplateEngine v_TemplateEngine = new();
+
+        private readonly BehaviorRegistry v_BehaviorRegistry;
         #endregion
 
         #region Constructors
@@ -64,13 +67,15 @@ namespace XamlToHtmlConverter.Rendering
             IEnumerable<ILayoutRenderer> layoutRenderers,
             IStyleBuilder styleBuilder,
             IEventExtractor eventExtractor,
-            ControlRendererRegistry controlRegistry)
+            ControlRendererRegistry controlRegistry,
+            BehaviorRegistry behaviorRegistry)
         {
             v_TagMapper = tagMapper;
             v_LayoutRenderers = layoutRenderers;
             v_StyleBuilder = styleBuilder;
             v_EventExtractor = eventExtractor;
             v_ControlRegistry = controlRegistry;
+            v_BehaviorRegistry = behaviorRegistry;
         }
 
 
@@ -97,6 +102,7 @@ namespace XamlToHtmlConverter.Rendering
             sb.AppendLine("<meta charset=\"UTF-8\" />");
             sb.AppendLine("<title>XAML to HTML Output</title>");
             sb.AppendLine(v_StyleRegistry.GenerateStyleBlock());
+            sb.AppendLine("<script src=\"xaml-runtime.js\"></script>");
             sb.AppendLine("</head>");
             sb.AppendLine("<body>");
             sb.Append(bodyBuilder.ToString());
@@ -145,12 +151,13 @@ namespace XamlToHtmlConverter.Rendering
             }
 
             // Emit data-event-* attributes
-            var eventAttributes = v_EventExtractor.Extract(element);
-            foreach (var evt in eventAttributes)
+            var behaviors = v_BehaviorRegistry.Extract(element);
+
+            foreach (var behavior in behaviors)
             {
-                sb.Append($" {evt.Key}=\"{evt.Value}\"");
+                sb.Append($" {behavior.Key}=\"{behavior.Value}\"");
             }
-           
+
 
             // Apply CSS class (deduplicated style)
             if (!string.IsNullOrWhiteSpace(style))
