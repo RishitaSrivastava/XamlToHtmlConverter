@@ -51,6 +51,8 @@ namespace XamlToHtmlConverter.Rendering
         private readonly TemplateEngine v_TemplateEngine = new();
 
         private readonly BehaviorRegistry v_BehaviorRegistry;
+
+        private static readonly Dictionary<int, string> v_IndentCache = new();
         #endregion
 
         #region Constructors
@@ -92,6 +94,7 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A complete HTML document string.</returns>
         public string RenderDocument(IntermediateRepresentationElement root)
         {
+
             var bodyBuilder = new StringBuilder();
             RenderElement(root, bodyBuilder, 0, null, null);
 
@@ -102,6 +105,7 @@ namespace XamlToHtmlConverter.Rendering
             sb.AppendLine("<meta charset=\"UTF-8\" />");
             sb.AppendLine("<title>XAML to HTML Output</title>");
             sb.AppendLine(v_StyleRegistry.GenerateStyleBlock());
+            sb.AppendLine(VirtualizationStyleInjector.Build());
             sb.AppendLine("<script src=\"xaml-runtime.js\"></script>");
             sb.AppendLine("</head>");
             sb.AppendLine("<body>");
@@ -128,18 +132,17 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="parentOrientation">The orientation of the parent container, or null if not applicable.</param>
         private void RenderElement(IntermediateRepresentationElement element, StringBuilder sb, int indent, string? parentLayoutType, string? parentOrientation)
         {
-            var indentation = new string(' ', indent);
+            var indentation = GetIndent(indent);
             var tag = v_TagMapper.Map(element.Type);
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
             sb.Append($"{indentation}<{tag}");
+            var attributes = new AttributeBuffer();
             var controlRenderer = v_ControlRegistry.Resolve(element);
-            Console.WriteLine($"Renderer for {element.Type}: {controlRenderer?.GetType().Name}");
-            Console.WriteLine("Element type = " + element.Type);
 
             if (controlRenderer != null)
             {
-                controlRenderer.RenderAttributes(element, sb);
+                controlRenderer.RenderAttributes(element, attributes);
             }
 
             // Emit data-binding-* attributes
@@ -147,7 +150,7 @@ namespace XamlToHtmlConverter.Rendering
 
             foreach (var attr in bindingAttributes)
             {
-                sb.Append($" {attr.Key}=\"{attr.Value}\"");
+                attributes.Add(attr.Key, attr.Value);
             }
 
             // Emit data-event-* attributes
@@ -155,7 +158,7 @@ namespace XamlToHtmlConverter.Rendering
 
             foreach (var behavior in behaviors)
             {
-                sb.Append($" {behavior.Key}=\"{behavior.Value}\"");
+                attributes.Add(behavior.Key, behavior.Value);
             }
 
 
@@ -163,7 +166,7 @@ namespace XamlToHtmlConverter.Rendering
             if (!string.IsNullOrWhiteSpace(style))
             {
                 var className = v_StyleRegistry.Register(style);
-                sb.Append($" class=\"{className}\"");
+                attributes.Add("class", className);
             }
 
             // Self-closing elements (input, img)
@@ -172,13 +175,14 @@ namespace XamlToHtmlConverter.Rendering
                 if (element.Type == "Image" &&
                     element.Properties.TryGetValue("Source", out var src))
                 {
-                    sb.Append($" src=\"{src}\"");
+                    attributes.Add("src", src);
                 }
 
+                attributes.WriteTo(sb);
                 sb.Append(" />");
 
-                // Render content for CheckBox or RadioButton
-                if ((element.Type == "CheckBox" || element.Type == "RadioButton") &&element.Properties.TryGetValue("Content", out var contentValue))
+                if ((element.Type == "CheckBox" || element.Type == "RadioButton") &&
+                    element.Properties.TryGetValue("Content", out var contentValue))
                 {
                     sb.Append($" {contentValue}");
                 }
@@ -187,6 +191,7 @@ namespace XamlToHtmlConverter.Rendering
                 return;
             }
 
+            attributes.WriteTo(sb);
             sb.Append(">");
             controlRenderer?.RenderContent(
             element,
@@ -282,6 +287,16 @@ namespace XamlToHtmlConverter.Rendering
             RenderElement(element, sb, indent, parentLayoutType, parentOrientation);
         }
 
+        private static string GetIndent(int indent)
+        {
+            if (!v_IndentCache.TryGetValue(indent, out var value))
+            {
+                value = new string(' ', indent);
+                v_IndentCache[indent] = value;
+            }
+
+            return value;
+        }
         #endregion
     }
 }

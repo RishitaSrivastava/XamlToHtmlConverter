@@ -9,19 +9,14 @@ public class TextBoxRenderer : IControlRenderer
         => element.Type == "TextBox";
 
     public void RenderAttributes(
-        IntermediateRepresentationElement element,
-        StringBuilder sb)
+    IntermediateRepresentationElement element,
+    AttributeBuffer attributes)
     {
-        sb.Append(" type=\"text\"");
+        attributes.Add("type", "text");
 
-        if (element.Properties.TryGetValue("Text", out var text))
+        if (element.Properties.TryGetValue("Text", out var value))
         {
-            var trimmed = text.Trim();
-
-            if (!trimmed.StartsWith("{Binding"))
-            {
-                sb.Append($" value=\"{text}\"");
-            }
+            attributes.Add("value", value);
         }
     }
     public void RenderContent(

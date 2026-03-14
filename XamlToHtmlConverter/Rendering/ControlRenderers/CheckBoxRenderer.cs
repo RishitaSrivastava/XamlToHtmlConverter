@@ -9,15 +9,14 @@ public class CheckBoxRenderer : IControlRenderer
         => element.Type == "CheckBox";
 
     public void RenderAttributes(
-        IntermediateRepresentationElement element,
-        StringBuilder sb)
+    IntermediateRepresentationElement element,
+    AttributeBuffer attributes)
     {
-        sb.Append(" type=\"checkbox\"");
+        attributes.Add("type", "checkbox");
 
-        if (element.Properties.TryGetValue("IsChecked", out var value) &&
-            value.Equals("True", StringComparison.OrdinalIgnoreCase))
+        if (element.Properties.TryGetValue("IsChecked", out var value))
         {
-            sb.Append(" checked");
+            attributes.Add("data-binding-checked", value);
         }
     }
     public void RenderContent(

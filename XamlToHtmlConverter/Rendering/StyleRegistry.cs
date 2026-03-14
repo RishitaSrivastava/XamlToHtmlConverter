@@ -43,6 +43,8 @@ namespace XamlToHtmlConverter.Rendering
             if (string.IsNullOrWhiteSpace(style))
                 return string.Empty;
 
+            style = NormalizeStyle(style);
+
             if (v_StyleToClass.TryGetValue(style, out var existing))
                 return existing;
 
@@ -51,6 +53,33 @@ namespace XamlToHtmlConverter.Rendering
             v_ClassToStyle[className] = style;
 
             return className;
+        }
+        private string NormalizeStyle(string style)
+        {
+            var rules = style.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+            var map = new Dictionary<string, string>();
+
+            foreach (var rule in rules)
+            {
+                var parts = rule.Split(':', 2);
+                if (parts.Length != 2)
+                    continue;
+
+                var property = parts[0].Trim();
+                var value = parts[1].Trim();
+
+                map[property] = value;
+            }
+
+            var sb = new StringBuilder();
+
+            foreach (var kv in map)
+            {
+                sb.Append($"{kv.Key}:{kv.Value};");
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>

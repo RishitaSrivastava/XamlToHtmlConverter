@@ -19,11 +19,12 @@ public class PropertyMapperEngine
     {
         foreach (var prop in element.Properties)
         {
+            Console.WriteLine($"Property found: {prop.Key} = {prop.Value}");
             foreach (var mapper in v_Mappers)
             {
                 if (mapper.CanHandle(prop.Key))
                 {
-                    mapper.Apply(element, prop.Value, context, styleBuilder);
+                    mapper.Apply(element, prop.Key, context, styleBuilder);
                     break;
                 }
             }

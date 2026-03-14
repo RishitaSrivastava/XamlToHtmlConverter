@@ -21,7 +21,14 @@ namespace XamlToHtmlConverter.Rendering
             v_PropertyEngine = new PropertyMapperEngine(new IPropertyMapper[]
             {
         new WidthMapper(),
-        new HeightMapper()
+        new HeightMapper(),
+        new TypographyMapper(),
+        new BorderMapper(),
+        new PaddingMapper(),
+        new MarginMapper(),
+        new MinMaxSizeMapper(),
+        new AlignmentMapper(),
+        new TextAlignmentMapper()
             });
         }
 
@@ -40,7 +47,7 @@ namespace XamlToHtmlConverter.Rendering
             var sb = new StringBuilder();
             v_PropertyEngine.Apply(element, context, sb);
             ApplyAttachedProperties(element, context, sb);
-            ApplyAlignment(element, context, sb);
+            //ApplyAlignment(element, context, sb);
             return sb.ToString();
         }
 
@@ -128,11 +135,40 @@ namespace XamlToHtmlConverter.Rendering
                 }
             }
 
-            if (element.Properties.TryGetValue("Width", out var width) && int.TryParse(width, out var w))
-                sb.Append($"width:{w}px;");
+            if (element.Properties.TryGetValue("Width", out var width))
+            {
+                if (width.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+                {
+                    sb.Append("width:auto;");
+                }
+                else if (width.Equals("Stretch", StringComparison.OrdinalIgnoreCase))
+                {
+                    sb.Append("width:100%;");
+                }
+                else if (int.TryParse(width, out var w))
+                {
+                    // Responsive improvement
+                    sb.Append($"max-width:{w}px;");
+                    sb.Append("width:100%;");
+                }
+            }
 
-            if (element.Properties.TryGetValue("Height", out var height) && int.TryParse(height, out var h))
-                sb.Append($"height:{h}px;");
+            if (element.Properties.TryGetValue("Height", out var height))
+            {
+                if (height.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+                {
+                    sb.Append("height:auto;");
+                }
+                else if (height.Equals("Stretch", StringComparison.OrdinalIgnoreCase))
+                {
+                    sb.Append("height:100%;");
+                }
+                else if (int.TryParse(height, out var h))
+                {
+                    // Better vertical behavior
+                    sb.Append($"min-height:{h}px;");
+                }
+            }
 
             if (element.Properties.TryGetValue("MinWidth", out var minWidth) && int.TryParse(minWidth, out var minW))
                 sb.Append($"min-width:{minW}px;");
@@ -154,6 +190,46 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Properties.TryGetValue("Padding", out var padding))
                 sb.Append($"padding:{ConvertThickness(padding)};");
+
+            // Default spacing between controls when XAML did not specify margin
+            if (!element.Properties.ContainsKey("Margin"))
+            {
+                // Do not add margin to layout containers
+                if (element.Type != "Grid" &&
+                    element.Type != "StackPanel" &&
+                    element.Type != "DockPanel" &&
+                    element.Type != "WrapPanel")
+                {
+                    sb.Append("margin:4px;");
+                }
+            }
+
+            // ---- Typography Mapping (WPF ? CSS) ----
+
+            // FontSize
+            if (element.Properties.TryGetValue("FontSize", out var fontSize) &&
+                int.TryParse(fontSize, out var fs))
+            {
+                sb.Append($"font-size:{fs}px;");
+            }
+
+            // FontWeight
+            if (element.Properties.TryGetValue("FontWeight", out var fontWeight))
+            {
+                sb.Append($"font-weight:{fontWeight.ToLower()};");
+            }
+
+            // FontFamily
+            if (element.Properties.TryGetValue("FontFamily", out var fontFamily))
+            {
+                sb.Append($"font-family:{fontFamily};");
+            }
+
+            // Foreground color
+            if (element.Properties.TryGetValue("Foreground", out var foreground))
+            {
+                sb.Append($"color:{foreground};");
+            }
 
             // WrapPanel item sizing support
             if (context.ParentLayoutType == "WrapPanel")
@@ -213,25 +289,38 @@ namespace XamlToHtmlConverter.Rendering
                 {
                     case "Top":
                         sb.Append("align-self:stretch;");
+                        sb.Append("width:100%;");
+                        sb.Append("order:-1;");
                         break;
 
                     case "Bottom":
-                        sb.Append("align-self:stretch;margin-top:auto;");
+                        sb.Append("align-self:stretch;");
+                        sb.Append("width:100%;");
+                        sb.Append("order:2;");
                         break;
 
                     case "Left":
-                        sb.Append("align-self:flex-start;");
+                        sb.Append("display:flex;");
+                        sb.Append("flex-direction:column;");
+                        sb.Append("flex:0 0 auto;");
                         break;
 
                     case "Right":
-                        sb.Append("align-self:flex-end;");
+                        sb.Append("display:flex;");
+                        sb.Append("flex-direction:column;");
+                        sb.Append("flex:0 0 auto;");
+                        sb.Append("margin-left:auto;");
                         break;
                 }
             }
             // LastChildFill behavior
             if (context.ParentLayoutType == "DockPanel")
             {
-                sb.Append("flex:1;");
+                if (!element.AttachedProperties.ContainsKey("DockPanel.Dock"))
+                {
+                    sb.Append("flex:1;");
+                    
+                }
             }
         }
 
@@ -243,56 +332,93 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="element">The IR element whose alignment properties are evaluated.</param>
         /// <param name="context">The layout context of the parent container.</param>
         /// <param name="sb">The string builder to append CSS to.</param>
-        private void ApplyAlignment(
-    IntermediateRepresentationElement element,
-    LayoutContext context,
-    StringBuilder styleBuilder)
-        {
-            if (context.ParentLayoutType == null)
-                return;
+    //    private void ApplyAlignment(
+    //IntermediateRepresentationElement element,
+    //LayoutContext context,
+    //StringBuilder styleBuilder)
+    //    {
+    //        if (context.ParentLayoutType == null)
+    //            return;
 
-            element.Properties.TryGetValue("HorizontalAlignment", out var hAlign);
-            element.Properties.TryGetValue("VerticalAlignment", out var vAlign);
+    //        element.Properties.TryGetValue("HorizontalAlignment", out var hAlign);
+    //        element.Properties.TryGetValue("VerticalAlignment", out var vAlign);
 
-            // GRID ALIGNMENT
-            if (context.ParentLayoutType == "Grid")
-            {
-                styleBuilder.Append($"justify-self:{ConvertAlignment(hAlign)};");
-                styleBuilder.Append($"align-self:{ConvertAlignment(vAlign)};");
-                return;
-            }
+    //        // GRID ALIGNMENT
+    //        if (context.ParentLayoutType == "Grid")
+    //        {
+    //            var h = ConvertAlignment(hAlign);
+    //            var v = ConvertAlignment(vAlign);
 
-            // STACKPANEL
-            if (context.ParentLayoutType == "StackPanel")
-            {
-                var orientation = context.ParentOrientation ?? "Vertical";
+    //            styleBuilder.Append($"justify-self:{h};");
+    //            styleBuilder.Append($"align-self:{v};");
 
-                if (orientation == "Vertical")
-                {
-                    // Cross axis = horizontal
-                    if (!string.IsNullOrWhiteSpace(hAlign))
-                        styleBuilder.Append($"align-self:{ConvertAlignment(hAlign)};");
-                }
-                else
-                {
-                    // Cross axis = vertical
-                    if (!string.IsNullOrWhiteSpace(vAlign))
-                        styleBuilder.Append($"align-self:{ConvertAlignment(vAlign)};");
-                }
+    //            // WPF Stretch support
+    //            if (h == "stretch")
+    //                styleBuilder.Append("width:100%;");
 
-                return;
-            }
+    //            if (v == "stretch")
+    //                styleBuilder.Append("height:100%;");
 
-            // WRAPPANEL
-            if (context.ParentLayoutType == "WrapPanel")
-            {
-                if (!string.IsNullOrWhiteSpace(hAlign))
-                    styleBuilder.Append($"align-self:{ConvertAlignment(hAlign)};");
+    //            return;
+    //        }
 
-                if (!string.IsNullOrWhiteSpace(vAlign))
-                    styleBuilder.Append($"align-self:{ConvertAlignment(vAlign)};");
-            }
-        }
+    //        // STACKPANEL
+    //        if (context.ParentLayoutType == "StackPanel")
+    //        {
+    //            var orientation = context.ParentOrientation ?? "Vertical";
+
+    //            if (orientation == "Vertical")
+    //            {
+    //                // Cross axis = horizontal
+    //                if (!string.IsNullOrWhiteSpace(hAlign))
+    //                {
+    //                    var h = ConvertAlignment(hAlign);
+
+    //                    styleBuilder.Append($"align-self:{h};");
+
+    //                    if (h == "stretch")
+    //                        styleBuilder.Append("width:100%;");
+    //                }
+    //            }
+    //            else
+    //            {
+    //                // Cross axis = vertical
+    //                if (!string.IsNullOrWhiteSpace(vAlign))
+    //                {
+    //                    var v = ConvertAlignment(vAlign);
+
+    //                    styleBuilder.Append($"align-self:{v};");
+
+    //                    if (v == "stretch")
+    //                        styleBuilder.Append("height:100%;");
+    //                }
+    //            }
+
+    //            return;
+    //        }
+
+    //        // WRAPPANEL
+    //        if (context.ParentLayoutType == "WrapPanel")
+    //        {
+    //            if (!string.IsNullOrWhiteSpace(hAlign))
+    //            {
+    //                var h = ConvertAlignment(hAlign);
+    //                styleBuilder.Append($"align-self:{h};");
+
+    //                if (h == "stretch")
+    //                    styleBuilder.Append("width:100%;");
+    //            }
+
+    //            if (!string.IsNullOrWhiteSpace(vAlign))
+    //            {
+    //                var v = ConvertAlignment(vAlign);
+    //                styleBuilder.Append($"align-self:{v};");
+
+    //                if (v == "stretch")
+    //                    styleBuilder.Append("height:100%;");
+    //            }
+    //        }
+    //    }
 
         /// <summary>
         /// Converts a XAML alignment value into its equivalent CSS flexbox/grid self-alignment keyword.

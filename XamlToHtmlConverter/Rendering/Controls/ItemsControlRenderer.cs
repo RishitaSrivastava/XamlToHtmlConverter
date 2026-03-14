@@ -10,31 +10,52 @@ namespace XamlToHtmlConverter.Rendering.Controls
     {
         public bool CanHandle(IntermediateRepresentationElement element)
         {
-            return element.Type == "ItemsControl";
+            return element.Type == "ItemsControl"
+                || element.Type == "ListView"
+                || element.Type == "ListBox"
+                || element.Type == "ComboBox";
         }
 
         public void RenderAttributes(
-            IntermediateRepresentationElement element,
-            StringBuilder sb)
+    IntermediateRepresentationElement element,
+    AttributeBuffer attributes)
         {
             if (element.Type == "ListBox")
             {
-                sb.Append(" multiple");
+                attributes.Add("multiple", null);
             }
 
-            if (element.Properties.TryGetValue("ItemsSource", out var source))
+            if (element.Bindings.TryGetValue("ItemsSource", out var binding))
             {
-                sb.Append($" data-itemssource=\"{source}\"");
+                attributes.Add("data-binding-itemssource", binding.Path);
             }
         }
 
         public void RenderContent(
-        IntermediateRepresentationElement element,
-        StringBuilder sb,
-        int indent,
-        Action<IntermediateRepresentationElement, StringBuilder, int> renderChild)
+    IntermediateRepresentationElement element,
+    StringBuilder sb,
+    int indent,
+    Action<IntermediateRepresentationElement, StringBuilder, int> renderChild)
+        {
+            // Phase 4 virtualization
+            if (VirtualizationDetector.RequiresVirtualization(element))
             {
-                // Default ItemsControl behavior handled elsewhere
+                VirtualizedItemsRenderer.RenderPlaceholder(element, sb, indent);
+                return;
             }
+
+            // Normal ItemsControl behavior
+            if (element.ItemTemplate != null)
+            {
+                var indentation = new string(' ', indent + 2);
+
+                sb.AppendLine();
+                sb.AppendLine($"{indentation}<div>");
+
+                renderChild(element.ItemTemplate, sb, indent + 4);
+
+                sb.AppendLine($"{indentation}</div>");
+            }
+        }
     }
 }

@@ -1,186 +1,272 @@
-<Window
-    Title="User Management Dashboard"
-    Width="1200"
-    Height="800"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
+<Border BorderThickness="2"
+        BorderBrush="Gray"
+        Padding="10"
+        Width="1200"
+        Height="800">
 
-    <Window.Resources>
+    <StackPanel>
 
-        <Style x:Key="SectionHeader">
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="Margin" Value="0,10,0,10"/>
-        </Style>
+        <TextBlock Text="Enterprise User Management"
+                   FontSize="28"
+                   FontWeight="Bold"
+                   Foreground="DarkBlue"
+                   Margin="10"/>
 
-        <Style x:Key="PrimaryButton">
-            <Setter Property="Margin" Value="5"/>
-            <Style.Triggers>
+        <DockPanel Margin="10">
 
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.5"/>
-                </Trigger>
+            <StackPanel DockPanel.Dock="Left"
+                        Width="200"
+                        Background="LightGray"
+                        Margin="5">
 
-                <MultiTrigger>
-                    <MultiTrigger.Conditions>
-                        <Condition Property="IsEnabled" Value="True"/>
-                        <Condition Property="IsMouseOver" Value="True"/>
-                    </MultiTrigger.Conditions>
-                    <Setter Property="Opacity" Value="0.9"/>
-                </MultiTrigger>
+                <TextBlock Text="Navigation"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Margin="5"/>
 
-            </Style.Triggers>
-        </Style>
+                <Button Content="Dashboard"
+                        Margin="5"
+                        Command="{Binding DashboardCommand}"/>
 
-    </Window.Resources>
+                <Button Content="Users"
+                        Margin="5"
+                        Command="{Binding UsersCommand}"/>
 
-    <DockPanel>
+                <Button Content="Roles"
+                        Margin="5"
+                        Command="{Binding RolesCommand}"/>
 
-        <!-- Top Header -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10">
+                <Button Content="Permissions"
+                        Margin="5"
+                        Command="{Binding PermissionsCommand}"/>
 
-            <TextBlock Text="User Management System"
-                       Style="{StaticResource SectionHeader}"/>
-
-        </StackPanel>
-
-        <!-- Sidebar -->
-        <StackPanel DockPanel.Dock="Left" Width="200" Margin="10">
-
-            <Button Content="Dashboard" Click="Dashboard_Click"/>
-            <Button Content="Users" Click="Users_Click"/>
-            <Button Content="Settings" Click="Settings_Click"/>
-            <Button Content="Reports" Click="Reports_Click"/>
-
-        </StackPanel>
-
-        <!-- Main Content -->
-        <Grid Margin="10">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <!-- Search Area -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-
-                <TextBlock Text="Search:" Margin="0,0,10,0"/>
-
-                <TextBox Width="200"
-                         Text="{Binding SearchText}"/>
-
-                <Button Content="Search"
-                        Command="{Binding SearchCommand}"
-                        Style="{StaticResource PrimaryButton}"/>
-
-                <Button Content="Reset"
-                        Command="{Binding ResetCommand}"
-                        Style="{StaticResource PrimaryButton}"/>
+                <Button Content="Audit Logs"
+                        Margin="5"
+                        Command="{Binding LogsCommand}"/>
 
             </StackPanel>
 
-            <!-- User List -->
-            <Grid Grid.Row="1">
+            <Grid Margin="10">
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- ListBox -->
-                <ListBox Grid.Column="0"
-                         ItemsSource="{Binding Users}"
-                         Margin="10">
 
-                    <ListBox.ItemTemplate>
+                <!-- SEARCH PANEL -->
 
-                        <DataTemplate>
+                <Border Grid.Row="0"
+                        Grid.ColumnSpan="2"
+                        BorderThickness="1"
+                        BorderBrush="LightGray"
+                        Padding="10"
+                        Margin="5">
 
-                            <Border Margin="5">
+                    <StackPanel Orientation="Horizontal">
 
-                                <StackPanel>
+                        <TextBlock Text="Search:"
+                                   VerticalAlignment="Center"
+                                   Margin="5"/>
 
-                                    <TextBlock Text="{Binding Name}"/>
+                        <TextBox Width="200"
+                                 Text="{Binding SearchText}"/>
 
-                                    <TextBlock Text="{Binding Email}"/>
+                        <Button Content="Search"
+                                Margin="10,0"
+                                Command="{Binding SearchCommand}"/>
 
-                                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Reset"
+                                Command="{Binding ResetCommand}"/>
 
-                                        <Button Content="Edit"
-                                                Command="{Binding EditUserCommand}"/>
+                    </StackPanel>
 
-                                        <Button Content="Delete"
-                                                Command="{Binding DeleteUserCommand}"/>
+                </Border>
 
-                                    </StackPanel>
 
-                                </StackPanel>
+                <!-- USER LIST -->
 
-                            </Border>
+                <Border Grid.Row="1"
+                        Grid.RowSpan="2"
+                        Grid.Column="0"
+                        BorderThickness="1"
+                        BorderBrush="LightGray"
+                        Margin="5"
+                        Padding="5">
 
-                        </DataTemplate>
+                    <ListView ItemsSource="{Binding Users}"
+                              Height="400">
 
-                    </ListBox.ItemTemplate>
+                        <ListView.ItemTemplate>
 
-                </ListBox>
+                            <DataTemplate>
 
-                <!-- Details Panel -->
-                <StackPanel Grid.Column="1" Margin="10">
+                                <Border BorderThickness="1"
+                                        BorderBrush="#DDD"
+                                        Margin="2"
+                                        Padding="6">
 
-                    <TextBlock Text="User Details"
-                               Style="{StaticResource SectionHeader}"/>
+                                    <Grid>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="1*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Name}"
+                                                   FontWeight="Bold"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Email}"/>
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Role}"/>
+
+                                        <StackPanel Grid.Column="3"
+                                                    Orientation="Horizontal">
+
+                                            <Button Content="Edit"
+                                                    Command="{Binding EditCommand}"
+                                                    Width="60"/>
+
+                                            <Button Content="Delete"
+                                                    Command="{Binding DeleteCommand}"
+                                                    Width="70"
+                                                    Margin="5,0"/>
+
+                                        </StackPanel>
+
+                                    </Grid>
+
+                                </Border>
+
+                            </DataTemplate>
+
+                        </ListView.ItemTemplate>
+
+                    </ListView>
+
+                </Border>
+
+
+                <!-- USER DETAILS -->
+
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        BorderThickness="1"
+                        BorderBrush="LightGray"
+                        Margin="5"
+                        Padding="10">
 
                     <StackPanel>
 
-                        <TextBlock Text="Name"/>
-                        <TextBox Text="{Binding SelectedUser.Name}"/>
+                        <TextBlock Text="User Details"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Margin="5"/>
 
-                        <TextBlock Text="Email"/>
-                        <TextBox Text="{Binding SelectedUser.Email}"/>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="Name:" Width="80"/>
+                            <TextBox Width="200"
+                                     Text="{Binding SelectedUser.Name}"/>
+                        </StackPanel>
 
-                        <TextBlock Text="Role"/>
-                        <TextBox Text="{Binding SelectedUser.Role}"/>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="Email:" Width="80"/>
+                            <TextBox Width="200"
+                                     Text="{Binding SelectedUser.Email}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="Role:" Width="80"/>
+                            <TextBox Width="200"
+                                     Text="{Binding SelectedUser.Role}"/>
+                        </StackPanel>
 
                         <CheckBox Content="Active"
-                                  IsChecked="{Binding SelectedUser.IsActive}"/>
+                                  IsChecked="{Binding SelectedUser.IsActive}"
+                                  Margin="5"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="10">
+
+                            <Button Content="Save"
+                                    Width="100"
+                                    Command="{Binding SaveCommand}"/>
+
+                            <Button Content="Cancel"
+                                    Width="100"
+                                    Margin="10,0"
+                                    Command="{Binding CancelCommand}"/>
+
+                        </StackPanel>
 
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                </Border>
 
-                        <Button Content="Save"
-                                Command="{Binding SaveUserCommand}"
-                                Style="{StaticResource PrimaryButton}"/>
 
-                        <Button Content="Cancel"
-                                Command="{Binding CancelEditCommand}"
-                                Style="{StaticResource PrimaryButton}"/>
+                <!-- STATISTICS -->
+
+                <Border Grid.Row="2"
+                        Grid.Column="1"
+                        BorderThickness="1"
+                        BorderBrush="LightGray"
+                        Margin="5"
+                        Padding="10">
+
+                    <StackPanel>
+
+                        <TextBlock Text="Statistics"
+                                   FontSize="18"
+                                   FontWeight="Bold"/>
+
+                        <TextBlock Text="Total Users:"/>
+                        <TextBlock Text="{Binding UserCount}"
+                                   FontSize="20"
+                                   FontWeight="Bold"/>
+
+                        <Button Content="Refresh Stats"
+                                Margin="10"
+                                Command="{Binding RefreshStatsCommand}"/>
 
                     </StackPanel>
+
+                </Border>
+
+
+                <!-- FOOTER -->
+
+                <StackPanel Grid.Row="3"
+                            Grid.ColumnSpan="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="10">
+
+                    <Button Content="Load More"
+                            Width="120"
+                            Command="{Binding LoadMoreCommand}"/>
+
+                    <TextBlock Text="Last Sync:"
+                               Margin="20,0,5,0"/>
+
+                    <TextBlock Text="{Binding LastSyncTime}"/>
 
                 </StackPanel>
 
             </Grid>
 
-            <!-- Footer -->
-            <StackPanel Grid.Row="2"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        Margin="10">
+        </DockPanel>
 
-                <TextBlock Text="Total Users:" Margin="5"/>
+    </StackPanel>
 
-                <TextBlock Text="{Binding UserCount}" Margin="5"/>
-
-                <Button Content="Load More"
-                        Command="{Binding LoadMoreUsersCommand}"
-                        Style="{StaticResource PrimaryButton}"/>
-
-            </StackPanel>
-
-        </Grid>
-
-    </DockPanel>
-
-</Window>
+</Border>

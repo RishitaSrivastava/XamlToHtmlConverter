@@ -11,10 +11,10 @@ public class ListBoxRenderer : IControlRenderer
     }
 
     public void RenderAttributes(
-        IntermediateRepresentationElement element,
-        StringBuilder sb)
+    IntermediateRepresentationElement element,
+    AttributeBuffer attributes)
     {
-        sb.Append(" multiple");
+        attributes.Add("multiple", null);
     }
 
     public void RenderContent(

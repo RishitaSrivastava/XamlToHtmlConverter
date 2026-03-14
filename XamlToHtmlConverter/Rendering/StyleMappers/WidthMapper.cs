@@ -6,15 +6,21 @@ namespace XamlToHtmlConverter.Rendering.StyleMappers;
 public class WidthMapper : IPropertyMapper
 {
     public bool CanHandle(string propertyName)
-        => propertyName == "Width";
+    {
+        return propertyName == "Width";
+    }
 
     public void Apply(
         IntermediateRepresentationElement element,
-        string value,
+        string propertyName,
         LayoutContext context,
-        StringBuilder styleBuilder)
+        StringBuilder sb)
     {
-        if (int.TryParse(value, out var w))
-            styleBuilder.Append($"width:{w}px;");
+        var value = element.Properties[propertyName];
+
+        if (int.TryParse(value, out var width))
+        {
+            sb.Append($"width:{width}px;");
+        }
     }
 }

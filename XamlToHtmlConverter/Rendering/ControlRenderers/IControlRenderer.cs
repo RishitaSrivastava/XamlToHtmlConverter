@@ -9,13 +9,11 @@ public interface IControlRenderer
 
     void RenderAttributes(
         IntermediateRepresentationElement element,
-        StringBuilder sb);
+        AttributeBuffer attributes);
 
     void RenderContent(
         IntermediateRepresentationElement element,
         StringBuilder sb,
         int indent,
         Action<IntermediateRepresentationElement, StringBuilder, int> renderChild);
-
-
 }

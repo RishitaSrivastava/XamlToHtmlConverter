@@ -40,6 +40,7 @@ namespace XamlToHtmlConverter.Rendering
                     direction = "row";
             }
             styleBuilder.Append($"flex-direction:{direction};");
+            
         }
 
         #endregion

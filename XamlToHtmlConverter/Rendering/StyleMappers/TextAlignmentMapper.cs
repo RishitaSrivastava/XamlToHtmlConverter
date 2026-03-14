@@ -3,11 +3,11 @@ using XamlToHtmlConverter.IntermediateRepresentation;
 
 namespace XamlToHtmlConverter.Rendering.StyleMappers;
 
-public class HeightMapper : IPropertyMapper
+public class TextAlignmentMapper : IPropertyMapper
 {
     public bool CanHandle(string propertyName)
     {
-        return propertyName == "Height";
+        return propertyName == "TextAlignment";
     }
 
     public void Apply(
@@ -18,9 +18,6 @@ public class HeightMapper : IPropertyMapper
     {
         var value = element.Properties[propertyName];
 
-        if (int.TryParse(value, out var height))
-        {
-            sb.Append($"height:{height}px;");
-        }
+        sb.Append($"text-align:{value.ToLower()};");
     }
 }

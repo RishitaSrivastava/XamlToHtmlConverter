@@ -5,8 +5,11 @@ using XamlToHtmlConverter.Rendering.Behavior.Handlers;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
 using XamlToHtmlConverter.Rendering.Controls;
 
+
 namespace XamlToHtmlConverter.Rendering
 {
+
+
     /// <summary>
     /// Provides a centralized factory for creating a fully configured
     /// <see cref="HtmlRenderer"/> instance with all default dependencies wired.
@@ -29,7 +32,8 @@ namespace XamlToHtmlConverter.Rendering
                 new StackPanelLayoutRenderer(),
                 new DockPanelLayoutRenderer(),
                 new WrapPanelLayoutRenderer(),
-                
+                new ScrollViewerLayoutRenderer()
+
             };
 
             var controlRegistry = new ControlRendererRegistry(new IControlRenderer[]
@@ -37,7 +41,8 @@ namespace XamlToHtmlConverter.Rendering
                 new TextBoxRenderer(),
                 new CheckBoxRenderer(),
                 new ListBoxRenderer(),
-                new ItemsControlRenderer()
+                new ItemsControlRenderer(),
+
             });
 
             var behaviorRegistry = new BehaviorRegistry(new IBehaviorHandler[]
@@ -49,6 +54,7 @@ namespace XamlToHtmlConverter.Rendering
                 new CheckedBehavior(),
                 new SelectedBehavior(),
                 new TriggerBehavior()
+
             });
 
 
