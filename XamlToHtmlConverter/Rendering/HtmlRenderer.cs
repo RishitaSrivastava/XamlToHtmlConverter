@@ -51,6 +51,12 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         private readonly Dictionary<string, ILayoutRenderer?> v_LayoutRendererCache = new();
 
+        /// <summary>
+        /// Caches HTML tag mapping by element type to avoid repeated dictionary lookups.
+        /// Maps XAML element type to HTML tag name (div, button, span, etc.).
+        /// </summary>
+        private readonly Dictionary<string, string> v_TagMappingCache = new();
+
         private readonly ControlRendererRegistry v_ControlRegistry;
 
         private readonly TemplateEngine v_TemplateEngine = new();
@@ -138,7 +144,7 @@ namespace XamlToHtmlConverter.Rendering
         private void RenderElement(IntermediateRepresentationElement element, StringBuilder sb, int indent, string? parentLayoutType, string? parentOrientation)
         {
             var indentation = GetIndent(indent);
-            var tag = v_TagMapper.Map(element.Type);
+            var tag = ResolveTagMapping(element.Type);
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
             sb.Append($"{indentation}<{tag}");
@@ -277,6 +283,25 @@ namespace XamlToHtmlConverter.Rendering
                 return content;
 
             return null;
+        }
+
+        /// <summary>
+        /// Resolves the HTML tag for a XAML element type using cached lookup.
+        /// Caches by element Type to avoid repeated tag mapper queries.
+        /// Performance optimization: eliminates repeated mapper lookups.
+        /// </summary>
+        private string ResolveTagMapping(string elementType)
+        {
+            // Cache lookup by type
+            if (v_TagMappingCache.TryGetValue(elementType, out var cached))
+                return cached;
+
+            // Resolve tag from mapper
+            var tag = v_TagMapper.Map(elementType);
+
+            // Cache the result
+            v_TagMappingCache[elementType] = tag;
+            return tag;
         }
 
         /// <summary>
