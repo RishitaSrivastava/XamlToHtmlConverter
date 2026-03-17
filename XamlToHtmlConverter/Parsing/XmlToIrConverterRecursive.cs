@@ -540,40 +540,6 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
     }
 
     /// <summary>
-    /// DEPRECATED: Use ConsolidateTreePass instead.
-    /// This method traverses the tree separately (kept for reference).
-    /// </summary>
-    [Obsolete("Use ConsolidateTreePass instead. This method traverses the tree separately.", false)]
-    private void ResolveStaticResources(IntermediateRepresentationElement element)
-    {
-        ApplyImplicitStyle(element);
-        ApplyStaticResource(element);
-
-        foreach (var child in element.Children)
-        {
-            PropagateDataContext(element, child);
-            ResolveStaticResources(child);
-        }
-    }
-
-    /// <summary>
-    /// Propagates the parent's DataContext to the child element
-    /// if the child does not already have its own DataContext defined.
-    /// DEPRECATED: Now handled in ConsolidateTreePass (kept for reference).
-    /// </summary>
-    /// <param name="parent">The parent IR element that may carry a DataContext.</param>
-    /// <param name="child">The child IR element to inherit the DataContext.</param>
-    [Obsolete("DataContext propagation now handled in ConsolidateTreePass", false)]
-    private void PropagateDataContext(IntermediateRepresentationElement parent, IntermediateRepresentationElement child)
-    {
-        if (child.Properties.ContainsKey("DataContext"))
-            return;
-
-        if (parent.Properties.TryGetValue("DataContext", out var dataContext))
-            child.Properties["DataContext"] = dataContext;
-    }
-
-    /// <summary>
     /// Extracts the resource key from a StaticResource markup extension string.
     /// </summary>
     /// <param name="value">The raw attribute value (e.g., "{StaticResource MyStyle}").</param>
