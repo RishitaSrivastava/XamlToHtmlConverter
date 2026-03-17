@@ -45,6 +45,11 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         private readonly StyleRegistry v_StyleRegistry = new();
 
+        /// <summary>
+        /// Caches layout renderer resolution by element type to avoid repeated LINQ queries.
+        /// Maps element type name to resolved layout renderer (eliminates LINQ Where/OrderByDescending).
+        /// </summary>
+        private readonly Dictionary<string, ILayoutRenderer?> v_LayoutRendererCache = new();
 
         private readonly ControlRendererRegistry v_ControlRegistry;
 
@@ -250,10 +255,7 @@ namespace XamlToHtmlConverter.Rendering
             var sb = new StringBuilder();
 
             // Apply layout container behavior (Grid, StackPanel, DockPanel, etc.)
-            var renderer = v_LayoutRenderers
-                .Where(r => r.CanHandle(element))
-                .OrderByDescending(r => r.Priority)
-                .FirstOrDefault();
+            var renderer = ResolveLayoutRenderer(element);
 
             renderer?.ApplyLayout(element, sb);
 
@@ -275,6 +277,35 @@ namespace XamlToHtmlConverter.Rendering
                 return content;
 
             return null;
+        }
+
+        /// <summary>
+        /// Resolves the appropriate layout renderer for an element type using cached lookup.
+        /// Caches by element Type to avoid repeated LINQ queries.
+        /// Performance optimization: eliminates Where/OrderByDescending enumerable allocations.
+        /// </summary>
+        private ILayoutRenderer? ResolveLayoutRenderer(IntermediateRepresentationElement element)
+        {
+            // Cache lookup by type
+            if (v_LayoutRendererCache.TryGetValue(element.Type, out var cached))
+                return cached;
+
+            // No LINQ: Manual iteration with priority tracking
+            ILayoutRenderer? result = null;
+            int maxPriority = -1;
+
+            foreach (var renderer in v_LayoutRenderers)
+            {
+                if (renderer.CanHandle(element) && renderer.Priority > maxPriority)
+                {
+                    result = renderer;
+                    maxPriority = renderer.Priority;
+                }
+            }
+
+            // Cache the result (even if null, to avoid re-checking)
+            v_LayoutRendererCache[element.Type] = result;
+            return result;
         }
 
         internal void RenderChild(
