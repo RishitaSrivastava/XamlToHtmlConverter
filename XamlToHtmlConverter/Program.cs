@@ -46,7 +46,6 @@ internal class Program
         document.Save(xmlOutputPath);
 
         // Phase 2: Convert to IR
-        Console.WriteLine("Recursive converter running...");
         var conversionWatch = Stopwatch.StartNew();
         IXmlToIrConverter converter = new XmlToIrConverterRecursive();
         var ir = converter.Convert(document.Root);

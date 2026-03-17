@@ -46,20 +46,14 @@ public class ControlRendererRegistry
     /// </returns>
     public IControlRenderer? Resolve(IntermediateRepresentationElement element)
     {
-        Console.WriteLine("Resolving renderer for: " + element.Type);
-
         foreach (var r in v_Renderers)
         {
-            Console.WriteLine("Checking renderer: " + r.GetType().Name);
-
             if (r.CanHandle(element))
             {
-                Console.WriteLine("MATCHED: " + r.GetType().Name);
                 return r;
             }
         }
 
-        Console.WriteLine("NO RENDERER FOUND");
         return null;
     }
 
