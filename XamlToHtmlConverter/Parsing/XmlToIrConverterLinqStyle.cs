@@ -6,9 +6,14 @@ using XamlToHtmlConverter.IntermediateRepresentation;
 namespace XamlToHtmlConverter.Parsing;
 
 /// <summary>
-/// Converts XML elements into IR elements using LINQ-based traversal.
-/// Maps attributes, text content, and child elements recursively.
+/// DEPRECATED: This LINQ-based converter is obsolete.
+/// Use <see cref="XmlToIrConverterRecursive"/> instead for superior performance.
+/// 
+/// This implementation uses extensive LINQ operations (Where, Select, OfType)
+/// which create multiple state machine allocations per element.
+/// It is retained for reference only and should not be used in production.
 /// </summary>
+[Obsolete("Use XmlToIrConverterRecursive instead. This implementation has suboptimal LINQ-based performance.", false)]
 public class XmlToIrConverterLinqStyle : IXmlToIrConverter
 {
     #region Public Methods

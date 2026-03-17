@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
 
 namespace XamlToHtmlConverter.Rendering.Triggers;
@@ -33,13 +34,18 @@ public static class TriggerEngine
         {
             var key = $"data-trigger-{trigger.Property.ToLower()}";
 
-            var style = string.Join(";",
-                trigger.Setters.Select(s => $"{s.Key}:{s.Value}"));
+            var sb_style = new StringBuilder();
+            bool first = true;
+            foreach (var setter in trigger.Setters)
+            {
+                if (!first) sb_style.Append(";");
+                sb_style.Append(setter.Key).Append(":").Append(setter.Value);
+                first = false;
+            }
 
-            result[key] = $"{trigger.Value}:{style}";
+            result[key] = $"{trigger.Value}:{sb_style}";
         }
         
-        Console.WriteLine($"Triggers found: {element.Triggers.Count}");
         return result;
     }
 
@@ -63,16 +69,25 @@ public static class TriggerEngine
 
         foreach (var trigger in element.MultiTriggers)
         {
-            var conditionString = string.Join("&",
-                trigger.Conditions.Select(c =>
-                    $"{c.Property}={c.Value}"));
+            var sbCondition = new StringBuilder();
+            bool firstCond = true;
+            foreach (var c in trigger.Conditions)
+            {
+                if (!firstCond) sbCondition.Append("&");
+                sbCondition.Append(c.Property).Append("=").Append(c.Value);
+                firstCond = false;
+            }
 
-            var setterString = string.Join(";",
-                trigger.Setters.Select(s =>
-                    $"{s.Key}:{s.Value}"));
+            var sbSetter = new StringBuilder();
+            bool firstSetter = true;
+            foreach (var s in trigger.Setters)
+            {
+                if (!firstSetter) sbSetter.Append(";");
+                sbSetter.Append(s.Key).Append(":").Append(s.Value);
+                firstSetter = false;
+            }
 
-            result[$"data-multitrigger"] =
-                $"{conditionString}:{setterString}";
+            result[$"data-multitrigger"] = $"{sbCondition}:{sbSetter}";
         }
 
         return result;

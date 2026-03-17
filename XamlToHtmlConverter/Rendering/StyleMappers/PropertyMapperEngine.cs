@@ -5,11 +5,11 @@ namespace XamlToHtmlConverter.Rendering.StyleMappers;
 
 public class PropertyMapperEngine
 {
-    private readonly List<IPropertyMapper> v_Mappers;
+    private readonly IEnumerable<IPropertyMapper> v_Mappers;
 
     public PropertyMapperEngine(IEnumerable<IPropertyMapper> mappers)
     {
-        v_Mappers = mappers.ToList();
+        v_Mappers = mappers;
     }
 
     public void Apply(
@@ -19,7 +19,6 @@ public class PropertyMapperEngine
     {
         foreach (var prop in element.Properties)
         {
-            Console.WriteLine($"Property found: {prop.Key} = {prop.Value}");
             foreach (var mapper in v_Mappers)
             {
                 if (mapper.CanHandle(prop.Key))
