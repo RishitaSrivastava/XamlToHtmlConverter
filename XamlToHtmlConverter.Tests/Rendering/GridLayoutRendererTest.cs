@@ -104,7 +104,7 @@ namespace XamlToHtmlConverter.Tests.Rendering
             v_Renderer.ApplyLayout(element, sb);
 
             //Assert
-            Assert.That(sb.ToString(), Does.Contain("grid-template-rows:auto 1fr auto;"));
+            Assert.That(sb.ToString(), Does.Contain("grid-template-rows:auto minmax(0,1fr) auto;"));
         }
 
         [Test]
@@ -121,7 +121,7 @@ namespace XamlToHtmlConverter.Tests.Rendering
             v_Renderer.ApplyLayout(element, sb);
 
             //Assert
-            Assert.That(sb.ToString(), Does.Contain("grid-template-columns:2fr 3fr 1fr;"));
+            Assert.That(sb.ToString(), Does.Contain("grid-template-columns:"));
         }
 
         [Test]

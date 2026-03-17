@@ -12,6 +12,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class GridLayoutRenderer : ILayoutRenderer
     {
+        public int Priority => 100;
         #region Public Methods
 
         /// <summary>
@@ -52,8 +53,13 @@ namespace XamlToHtmlConverter.Rendering
         {
             if (element.GridRowDefinitions.Count > 0)
             {
-                var rows = element.GridRowDefinitions.Select(ConvertGridLength);
-                styleBuilder.Append($"grid-template-rows:{string.Join(" ", rows)};");
+                styleBuilder.Append("grid-template-rows:");
+                for (int i = 0; i < element.GridRowDefinitions.Count; i++)
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append(ConvertGridLength(element.GridRowDefinitions[i]));
+                }
+                styleBuilder.Append(";");
                 return;
             }
 
@@ -82,11 +88,13 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Children.Count > 0)
             {
-                var rows = new List<string>();
+                styleBuilder.Append("grid-template-rows:");
                 for (int i = 0; i <= maxRow; i++)
-                    rows.Add("auto");
-
-                styleBuilder.Append($"grid-template-rows:{string.Join(" ", rows)};");
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append("auto");
+                }
+                styleBuilder.Append(";");
             }
         }
 
@@ -101,8 +109,13 @@ namespace XamlToHtmlConverter.Rendering
         {
             if (element.GridColumnDefinitions.Count > 0)
             {
-                var cols = element.GridColumnDefinitions.Select(ConvertGridLength);
-                styleBuilder.Append($"grid-template-columns:{string.Join(" ", cols)};");
+                styleBuilder.Append("grid-template-columns:");
+                for (int i = 0; i < element.GridColumnDefinitions.Count; i++)
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append(ConvertGridLength(element.GridColumnDefinitions[i]));
+                }
+                styleBuilder.Append(";");
                 return;
             }
 
@@ -131,11 +144,13 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Children.Count > 0)
             {
-                var cols = new List<string>();
+                styleBuilder.Append("grid-template-columns:");
                 for (int i = 0; i <= maxCol; i++)
-                    cols.Add("auto");
-
-                styleBuilder.Append($"grid-template-columns:{string.Join(" ", cols)};");
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append("auto");
+                }
+                styleBuilder.Append(";");
             }
         }
 
@@ -145,25 +160,33 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         /// <param name="value">The raw XAML GridLength string (e.g., "Auto", "2*", "100").</param>
         /// <returns>The equivalent CSS unit string (e.g., "auto", "2fr", "100px").</returns>
+
         private string ConvertGridLength(string value)
         {
-            value = value.Trim();
-
-            if (value.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(value))
                 return "auto";
 
+            value = value.Trim();
+
+            // WPF Auto
+            if (value.ToLowerInvariant() == "auto")
+                return "auto";
+
+            // WPF star sizing
             if (value.EndsWith("*"))
             {
-                var numberPart = value.Replace("*", "");
-                if (string.IsNullOrWhiteSpace(numberPart))
-                    return "1fr";
+                var star = value.Replace("*", "");
 
-                if (int.TryParse(numberPart, out var multiplier))
-                    return $"{multiplier}fr";
+                if (string.IsNullOrWhiteSpace(star))
+                    star = "1";
+
+                // use minmax for better CSS behaviour
+                return $"minmax(0,{star}fr)";
             }
 
-            if (int.TryParse(value, out var pixels))
-                return $"{pixels}px";
+            // pixel values
+            if (int.TryParse(value, out var px))
+                return $"{px}px";
 
             return value;
         }

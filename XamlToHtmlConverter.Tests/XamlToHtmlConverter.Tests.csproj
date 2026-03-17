@@ -21,7 +21,6 @@
   <ItemGroup>
     <Folder Include="Parsing\" />
     <Folder Include="IntermediateRepresentation\" />
-    <Folder Include="Rendering\" />
   </ItemGroup>
 
 </Project>

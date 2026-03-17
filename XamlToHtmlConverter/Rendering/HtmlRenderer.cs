@@ -2,6 +2,9 @@
 
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
+using XamlToHtmlConverter.Rendering.Behavior;
+using XamlToHtmlConverter.Rendering.ControlRenderers;
+using XamlToHtmlConverter.Rendering.Templates;
 
 namespace XamlToHtmlConverter.Rendering
 {
@@ -12,6 +15,9 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class HtmlRenderer
     {
+        
+
+        
         #region Private Data
 
         /// <summary>
@@ -39,6 +45,25 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         private readonly StyleRegistry v_StyleRegistry = new();
 
+        /// <summary>
+        /// Caches layout renderer resolution by element type to avoid repeated LINQ queries.
+        /// Maps element type name to resolved layout renderer (eliminates LINQ Where/OrderByDescending).
+        /// </summary>
+        private readonly Dictionary<string, ILayoutRenderer?> v_LayoutRendererCache = new();
+
+        /// <summary>
+        /// Caches HTML tag mapping by element type to avoid repeated dictionary lookups.
+        /// Maps XAML element type to HTML tag name (div, button, span, etc.).
+        /// </summary>
+        private readonly Dictionary<string, string> v_TagMappingCache = new();
+
+        private readonly ControlRendererRegistry v_ControlRegistry;
+
+        private readonly TemplateEngine v_TemplateEngine = new();
+
+        private readonly BehaviorRegistry v_BehaviorRegistry;
+
+        private static readonly Dictionary<int, string> v_IndentCache = new();
         #endregion
 
         #region Constructors
@@ -54,13 +79,18 @@ namespace XamlToHtmlConverter.Rendering
             IElementTagMapper tagMapper,
             IEnumerable<ILayoutRenderer> layoutRenderers,
             IStyleBuilder styleBuilder,
-            IEventExtractor eventExtractor)
+            IEventExtractor eventExtractor,
+            ControlRendererRegistry controlRegistry,
+            BehaviorRegistry behaviorRegistry)
         {
             v_TagMapper = tagMapper;
             v_LayoutRenderers = layoutRenderers;
             v_StyleBuilder = styleBuilder;
             v_EventExtractor = eventExtractor;
+            v_ControlRegistry = controlRegistry;
+            v_BehaviorRegistry = behaviorRegistry;
         }
+
 
         #endregion
 
@@ -75,6 +105,7 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A complete HTML document string.</returns>
         public string RenderDocument(IntermediateRepresentationElement root)
         {
+
             var bodyBuilder = new StringBuilder();
             RenderElement(root, bodyBuilder, 0, null, null);
 
@@ -85,6 +116,8 @@ namespace XamlToHtmlConverter.Rendering
             sb.AppendLine("<meta charset=\"UTF-8\" />");
             sb.AppendLine("<title>XAML to HTML Output</title>");
             sb.AppendLine(v_StyleRegistry.GenerateStyleBlock());
+            sb.AppendLine(VirtualizationStyleInjector.Build());
+            sb.AppendLine("<script src=\"xaml-runtime.js\"></script>");
             sb.AppendLine("</head>");
             sb.AppendLine("<body>");
             sb.Append(bodyBuilder.ToString());
@@ -110,14 +143,17 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="parentOrientation">The orientation of the parent container, or null if not applicable.</param>
         private void RenderElement(IntermediateRepresentationElement element, StringBuilder sb, int indent, string? parentLayoutType, string? parentOrientation)
         {
-            var indentation = new string(' ', indent);
-            var tag = v_TagMapper.Map(element.Type);
+            var indentation = GetIndent(indent);
+            var tag = ResolveTagMapping(element.Type);
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
             sb.Append($"{indentation}<{tag}");
-            if (element.Type == "ListBox")
+            var attributes = new AttributeBuffer();
+            var controlRenderer = v_ControlRegistry.Resolve(element);
+
+            if (controlRenderer != null)
             {
-                sb.Append(" multiple");
+                controlRenderer.RenderAttributes(element, attributes);
             }
 
             // Emit data-binding-* attributes
@@ -125,62 +161,23 @@ namespace XamlToHtmlConverter.Rendering
 
             foreach (var attr in bindingAttributes)
             {
-                sb.Append($" {attr.Key}=\"{attr.Value}\"");
+                attributes.Add(attr.Key, attr.Value);
             }
 
             // Emit data-event-* attributes
-            var eventAttributes = v_EventExtractor.Extract(element);
-            foreach (var evt in eventAttributes)
+            var behaviors = v_BehaviorRegistry.Extract(element);
+
+            foreach (var behavior in behaviors)
             {
-                sb.Append($" {evt.Key}=\"{evt.Value}\"");
+                attributes.Add(behavior.Key, behavior.Value);
             }
-            // ---- TextBox special handling ----
-            if (element.Type == "TextBox")
-            {
-                sb.Append(" type=\"text\"");
 
-                if (element.Properties.TryGetValue("Text", out var text))
-                {
-                    var trimmed = text.Trim();
-
-                    bool isBinding =
-                        trimmed.StartsWith("{Binding") &&
-                        trimmed.EndsWith("}");
-
-                    if (!isBinding)
-                    {
-                        sb.Append($" value=\"{text}\"");
-                    }
-                }
-            }
-            // CheckBox handling
-            else if (element.Type == "CheckBox")
-            {
-                sb.Append(" type=\"checkbox\"");
-
-                if (element.Properties.TryGetValue("IsChecked", out var isChecked) &&
-                    string.Equals(isChecked, "True", StringComparison.OrdinalIgnoreCase))
-                {
-                    sb.Append(" checked");
-                }
-            }
-            // RadioButton handling
-            else if (element.Type == "RadioButton")
-            {
-                sb.Append(" type=\"radio\"");
-
-                if (element.Properties.TryGetValue("IsChecked", out var isChecked) &&
-                    string.Equals(isChecked, "True", StringComparison.OrdinalIgnoreCase))
-                {
-                    sb.Append(" checked");
-                }
-            }
 
             // Apply CSS class (deduplicated style)
             if (!string.IsNullOrWhiteSpace(style))
             {
                 var className = v_StyleRegistry.Register(style);
-                sb.Append($" class=\"{className}\"");
+                attributes.Add("class", className);
             }
 
             // Self-closing elements (input, img)
@@ -189,13 +186,14 @@ namespace XamlToHtmlConverter.Rendering
                 if (element.Type == "Image" &&
                     element.Properties.TryGetValue("Source", out var src))
                 {
-                    sb.Append($" src=\"{src}\"");
+                    attributes.Add("src", src);
                 }
 
+                attributes.WriteTo(sb);
                 sb.Append(" />");
 
-                // Render content for CheckBox or RadioButton
-                if ((element.Type == "CheckBox" || element.Type == "RadioButton") &&element.Properties.TryGetValue("Content", out var contentValue))
+                if ((element.Type == "CheckBox" || element.Type == "RadioButton") &&
+                    element.Properties.TryGetValue("Content", out var contentValue))
                 {
                     sb.Append($" {contentValue}");
                 }
@@ -204,9 +202,18 @@ namespace XamlToHtmlConverter.Rendering
                 return;
             }
 
+            attributes.WriteTo(sb);
             sb.Append(">");
+            controlRenderer?.RenderContent(
+            element,
+            sb,
+            indent,
+            (child, builder, childIndent) =>
+            {
+                RenderElement(child, builder, childIndent, element.Type, parentOrientation);
+            });
 
-            
+
 
             var content = ResolveElementContent(element);
 
@@ -215,11 +222,11 @@ namespace XamlToHtmlConverter.Rendering
                 sb.Append(content);
             }
 
-
             // Render children recursively
             if (element.Children.Count > 0)
             {
                 sb.AppendLine();
+
                 for (int i = 0; i < element.Children.Count; i++)
                 {
                     var child = element.Children[i];
@@ -232,50 +239,7 @@ namespace XamlToHtmlConverter.Rendering
                         orientation = o;
                     }
 
-                    // TextBlock ? TextBox ? label
-                    if (child.Type == "TextBlock" &&
-                        i + 1 < element.Children.Count &&
-                        element.Children[i + 1].Type == "TextBox")
-                    {
-                        var labelText = child.InnerText ?? "";
-
-                        sb.AppendLine($"{new string(' ', indent + 2)}<label>{labelText}</label>");
-
-                        continue;
-                    }
-
-                    // Flatten ItemsControl.Items
-                    if (child.Type == "ItemsControl.Items")
-                    {
-                        foreach (var item in child.Children)
-                        {
-                            RenderElement(item, sb, indent + 2, element.Type, orientation);
-                        }
-                    }
-
-                    // Handle ItemTemplate
-                    else if (child.Type == "ItemsControl.ItemTemplate")
-                    {
-                        foreach (var templateNode in child.Children)
-                        {
-                            if (templateNode.Type == "DataTemplate")
-                            {
-                                sb.AppendLine($"{new string(' ', indent + 2)}<template>");
-
-                                foreach (var templateChild in templateNode.Children)
-                                {
-                                    RenderElement(templateChild, sb, indent + 4, element.Type, orientation);
-                                }
-
-                                sb.AppendLine($"{new string(' ', indent + 2)}</template>");
-                            }
-                        }
-                    }
-
-                    else
-                    {
-                        RenderElement(child, sb, indent + 2, element.Type, orientation);
-                    }
+                    RenderElement(child, sb, indent + 2, element.Type, orientation);
                 }
 
                 sb.Append(indentation);
@@ -297,14 +261,9 @@ namespace XamlToHtmlConverter.Rendering
             var sb = new StringBuilder();
 
             // Apply layout container behavior (Grid, StackPanel, DockPanel, etc.)
-            foreach (var layout in v_LayoutRenderers)
-            {
-                if (layout.CanHandle(element))
-                {
-                    layout.ApplyLayout(element, sb);
-                    break;
-                }
-            }
+            var renderer = ResolveLayoutRenderer(element);
+
+            renderer?.ApplyLayout(element, sb);
 
             // Apply property-based styling (width, margin, alignment, grid positioning, etc.)
             var context = new LayoutContext(parentLayoutType, parentOrientation);
@@ -326,6 +285,74 @@ namespace XamlToHtmlConverter.Rendering
             return null;
         }
 
+        /// <summary>
+        /// Resolves the HTML tag for a XAML element type using cached lookup.
+        /// Caches by element Type to avoid repeated tag mapper queries.
+        /// Performance optimization: eliminates repeated mapper lookups.
+        /// </summary>
+        private string ResolveTagMapping(string elementType)
+        {
+            // Cache lookup by type
+            if (v_TagMappingCache.TryGetValue(elementType, out var cached))
+                return cached;
+
+            // Resolve tag from mapper
+            var tag = v_TagMapper.Map(elementType);
+
+            // Cache the result
+            v_TagMappingCache[elementType] = tag;
+            return tag;
+        }
+
+        /// <summary>
+        /// Resolves the appropriate layout renderer for an element type using cached lookup.
+        /// Caches by element Type to avoid repeated LINQ queries.
+        /// Performance optimization: eliminates Where/OrderByDescending enumerable allocations.
+        /// </summary>
+        private ILayoutRenderer? ResolveLayoutRenderer(IntermediateRepresentationElement element)
+        {
+            // Cache lookup by type
+            if (v_LayoutRendererCache.TryGetValue(element.Type, out var cached))
+                return cached;
+
+            // No LINQ: Manual iteration with priority tracking
+            ILayoutRenderer? result = null;
+            int maxPriority = -1;
+
+            foreach (var renderer in v_LayoutRenderers)
+            {
+                if (renderer.CanHandle(element) && renderer.Priority > maxPriority)
+                {
+                    result = renderer;
+                    maxPriority = renderer.Priority;
+                }
+            }
+
+            // Cache the result (even if null, to avoid re-checking)
+            v_LayoutRendererCache[element.Type] = result;
+            return result;
+        }
+
+        internal void RenderChild(
+        IntermediateRepresentationElement element,
+        StringBuilder sb,
+        int indent,
+        string? parentLayoutType,
+        string? parentOrientation)
+        {
+            RenderElement(element, sb, indent, parentLayoutType, parentOrientation);
+        }
+
+        private static string GetIndent(int indent)
+        {
+            if (!v_IndentCache.TryGetValue(indent, out var value))
+            {
+                value = new string(' ', indent);
+                v_IndentCache[indent] = value;
+            }
+
+            return value;
+        }
         #endregion
     }
 }

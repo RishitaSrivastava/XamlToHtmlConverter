@@ -13,6 +13,7 @@ namespace XamlToHtmlConverter.Rendering
     /// </summary>
     public class DockPanelLayoutRenderer : ILayoutRenderer
     {
+        public int Priority => 70;
         #region Public Methods
 
         /// <summary>
@@ -30,25 +31,31 @@ namespace XamlToHtmlConverter.Rendering
         /// </summary>
         /// <param name="element">The DockPanel IR element to render layout for.</param>
         /// <param name="styleBuilder">The string builder to append CSS styles to.</param>
-        public void ApplyLayout(IntermediateRepresentationElement element, StringBuilder styleBuilder)
+        public void ApplyLayout(
+    IntermediateRepresentationElement element,
+    StringBuilder styleBuilder)
         {
             styleBuilder.Append("display:flex;");
 
+            bool hasTopOrBottom = false;
+
             foreach (var child in element.Children)
             {
-                if (child.AttachedProperties.TryGetValue("DockPanel.Dock", out var dock))
+                if (!child.AttachedProperties.TryGetValue("DockPanel.Dock", out var dock))
+                    continue;
+
+                if (dock == "Top" || dock == "Bottom")
                 {
-                    if (dock == "Top" || dock == "Bottom")
-                    {
-                        styleBuilder.Append("flex-direction:column;");
-                        return;
-                    }
+                    hasTopOrBottom = true;
+                    break;
                 }
             }
 
-            styleBuilder.Append("flex-direction:row;");
+            if (hasTopOrBottom)
+                styleBuilder.Append("flex-direction:column;");
+            else
+                styleBuilder.Append("flex-direction:row;");
         }
-
         #endregion
     }
 }
