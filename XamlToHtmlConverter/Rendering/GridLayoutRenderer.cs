@@ -53,8 +53,13 @@ namespace XamlToHtmlConverter.Rendering
         {
             if (element.GridRowDefinitions.Count > 0)
             {
-                var rows = element.GridRowDefinitions.Select(ConvertGridLength);
-                styleBuilder.Append($"grid-template-rows:{string.Join(" ", rows)};");
+                styleBuilder.Append("grid-template-rows:");
+                for (int i = 0; i < element.GridRowDefinitions.Count; i++)
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append(ConvertGridLength(element.GridRowDefinitions[i]));
+                }
+                styleBuilder.Append(";");
                 return;
             }
 
@@ -83,11 +88,13 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Children.Count > 0)
             {
-                var rows = new List<string>();
+                styleBuilder.Append("grid-template-rows:");
                 for (int i = 0; i <= maxRow; i++)
-                    rows.Add("auto");
-
-                styleBuilder.Append($"grid-template-rows:{string.Join(" ", rows)};");
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append("auto");
+                }
+                styleBuilder.Append(";");
             }
         }
 
@@ -102,8 +109,13 @@ namespace XamlToHtmlConverter.Rendering
         {
             if (element.GridColumnDefinitions.Count > 0)
             {
-                var cols = element.GridColumnDefinitions.Select(ConvertGridLength);
-                styleBuilder.Append($"grid-template-columns:{string.Join(" ", cols)};");
+                styleBuilder.Append("grid-template-columns:");
+                for (int i = 0; i < element.GridColumnDefinitions.Count; i++)
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append(ConvertGridLength(element.GridColumnDefinitions[i]));
+                }
+                styleBuilder.Append(";");
                 return;
             }
 
@@ -132,11 +144,13 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Children.Count > 0)
             {
-                var cols = new List<string>();
+                styleBuilder.Append("grid-template-columns:");
                 for (int i = 0; i <= maxCol; i++)
-                    cols.Add("auto");
-
-                styleBuilder.Append($"grid-template-columns:{string.Join(" ", cols)};");
+                {
+                    if (i > 0) styleBuilder.Append(" ");
+                    styleBuilder.Append("auto");
+                }
+                styleBuilder.Append(";");
             }
         }
 
@@ -155,7 +169,7 @@ namespace XamlToHtmlConverter.Rendering
             value = value.Trim();
 
             // WPF Auto
-            if (value.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+            if (value.ToLowerInvariant() == "auto")
                 return "auto";
 
             // WPF star sizing

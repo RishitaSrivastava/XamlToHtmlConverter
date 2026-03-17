@@ -90,10 +90,16 @@ namespace XamlToHtmlConverter.Rendering
             {
                 var key = $"data-trigger-{trigger.Property.ToLower()}";
 
-                var setterString = string.Join(";",
-                    trigger.Setters.Select(s => $"{s.Key}:{s.Value}"));
+                var sb_setters = new StringBuilder();
+                bool first = true;
+                foreach (var s in trigger.Setters)
+                {
+                    if (!first) sb_setters.Append(";");
+                    sb_setters.Append(s.Key).Append(":").Append(s.Value);
+                    first = false;
+                }
 
-                result[key] = $"{trigger.Value}:{setterString}";
+                result[key] = $"{trigger.Value}:{sb_setters}";
             }
 
             var multi = TriggerEngine.ExtractMultiTriggers(element);
@@ -137,11 +143,12 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Properties.TryGetValue("Width", out var width))
             {
-                if (width.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+                var widthLower = width.ToLowerInvariant();
+                if (widthLower == "auto")
                 {
                     sb.Append("width:auto;");
                 }
-                else if (width.Equals("Stretch", StringComparison.OrdinalIgnoreCase))
+                else if (widthLower == "stretch")
                 {
                     sb.Append("width:100%;");
                 }
@@ -155,11 +162,12 @@ namespace XamlToHtmlConverter.Rendering
 
             if (element.Properties.TryGetValue("Height", out var height))
             {
-                if (height.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+                var heightLower = height.ToLowerInvariant();
+                if (heightLower == "auto")
                 {
                     sb.Append("height:auto;");
                 }
-                else if (height.Equals("Stretch", StringComparison.OrdinalIgnoreCase))
+                else if (heightLower == "stretch")
                 {
                     sb.Append("height:100%;");
                 }
@@ -482,7 +490,15 @@ namespace XamlToHtmlConverter.Rendering
                 }
 
                 if (values.Count == 4)
-                    return string.Join(" ", values);
+                {
+                    var sb_thickness = new StringBuilder();
+                    for (int i = 0; i < values.Count; i++)
+                    {
+                        if (i > 0) sb_thickness.Append(" ");
+                        sb_thickness.Append(values[i]);
+                    }
+                    return sb_thickness.ToString();
+                }
             }
 
             return value;
