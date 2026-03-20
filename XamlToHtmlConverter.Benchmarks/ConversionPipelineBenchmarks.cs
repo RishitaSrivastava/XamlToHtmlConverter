@@ -32,10 +32,41 @@ public class ConversionPipelineBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        // Use sample XAML files from the project
-        var baseDir = AppContext.BaseDirectory;
-        v_SampleXamlPath = Path.Combine(baseDir, "..", "..", "..", "XamlToHtmlConverter", "sample.xaml");
-        v_LargeXamlPath = Path.Combine(baseDir, "..", "..", "..", "XamlToHtmlConverter", "sample2.xaml");
+        // Try local directory first (for Release builds)
+        var localPath = Path.Combine(AppContext.BaseDirectory, "sample.xaml");
+        if (File.Exists(localPath))
+        {
+            v_SampleXamlPath = localPath;
+            v_LargeXamlPath = Path.Combine(AppContext.BaseDirectory, "sample2.xaml");
+        }
+        else
+        {
+            // Fall back to solution root search
+            var solutionRoot = FindSolutionRoot(AppContext.BaseDirectory);
+            v_SampleXamlPath = Path.Combine(solutionRoot, "XamlToHtmlConverter", "sample.xaml");
+            v_LargeXamlPath = Path.Combine(solutionRoot, "XamlToHtmlConverter", "sample2.xaml");
+        }
+    }
+
+    /// <summary>
+    /// Finds the solution root by traversing up the directory tree
+    /// looking for common solution-level files or the project name.
+    /// </summary>
+    private static string FindSolutionRoot(string startPath)
+    {
+        var currentPath = startPath;
+        while (currentPath != null)
+        {
+            // Check if we can find the XamlToHtmlConverter project directory
+            var projectPath = Path.Combine(currentPath, "XamlToHtmlConverter");
+            if (Directory.Exists(projectPath) && File.Exists(Path.Combine(projectPath, "sample.xaml")))
+                return currentPath;
+
+            var parent = Directory.GetParent(currentPath);
+            currentPath = parent?.FullName;
+        }
+
+        throw new InvalidOperationException("Could not locate solution root with XAML files.");
     }
 
     /// <summary>

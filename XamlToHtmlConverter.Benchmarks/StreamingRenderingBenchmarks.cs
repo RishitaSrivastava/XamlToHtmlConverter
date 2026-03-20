@@ -3,6 +3,7 @@
 using BenchmarkDotNet.Attributes;
 using XamlToHtmlConverter.Parsing;
 using XamlToHtmlConverter.Rendering;
+using XamlToHtmlConverter.Rendering.StyleMappers;
 
 namespace XamlToHtmlConverter.Benchmarks;
 
@@ -32,7 +33,22 @@ public class StreamingRenderingBenchmarks
         v_RegularRenderer = HtmlRendererFactory.Create();
         
         var tagMapper = new DefaultElementTagMapper();
-        var styleBuilder = new DefaultStyleBuilder();
+        
+        // Provide default mappers (Dependency Inversion Principle)
+        var mappers = new IPropertyMapper[]
+        {
+            new WidthMapper(),
+            new HeightMapper(),
+            new TypographyMapper(),
+            new BorderMapper(),
+            new PaddingMapper(),
+            new MarginMapper(),
+            new MinMaxSizeMapper(),
+            new AlignmentMapper(),
+            new TextAlignmentMapper()
+        };
+        
+        var styleBuilder = new DefaultStyleBuilder(mappers);
         var layoutRenderers = new ILayoutRenderer[] { };
         v_StreamingRenderer = new StreamingHtmlRenderer(tagMapper, styleBuilder, layoutRenderers);
     }
@@ -121,7 +137,22 @@ public class StreamingPipelineBenchmarks
 
         var converter = new XmlToIrConverterRecursive();
         var tagMapper = new DefaultElementTagMapper();
-        var styleBuilder = new DefaultStyleBuilder();
+        
+        // Provide default mappers (Dependency Inversion Principle)
+        var mappers = new IPropertyMapper[]
+        {
+            new WidthMapper(),
+            new HeightMapper(),
+            new TypographyMapper(),
+            new BorderMapper(),
+            new PaddingMapper(),
+            new MarginMapper(),
+            new MinMaxSizeMapper(),
+            new AlignmentMapper(),
+            new TextAlignmentMapper()
+        };
+        
+        var styleBuilder = new DefaultStyleBuilder(mappers);
         var layoutRenderers = new ILayoutRenderer[] { };
         var renderer = new StreamingHtmlRenderer(tagMapper, styleBuilder, layoutRenderers);
         v_Pipeline = new StreamingConversionPipeline(converter, renderer);

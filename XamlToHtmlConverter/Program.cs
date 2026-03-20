@@ -1,131 +1,59 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
-using System.Diagnostics;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Parsing;
 using XamlToHtmlConverter.Rendering;
-using XamlToHtmlConverter.Rendering.Behavior;
-using XamlToHtmlConverter.Rendering.Behavior.Handlers;
-using XamlToHtmlConverter.Rendering.ControlRenderers;
-using XamlToHtmlConverter.Rendering.Controls;
 
 namespace XamlToHtmlConverter;
 
 /// <summary>
 /// Entry point of the XAML-to-HTML converter application.
-/// Coordinates XAML loading, IR conversion, XML export,
-/// HTML rendering, and console inspection.
+/// Orchestrates the conversion pipeline and handles errors.
 /// </summary>
 internal class Program
 {
-    #region Private Methods
-
     /// <summary>
-    /// Executes the end-to-end XAML to HTML conversion pipeline.
-    /// Loads the XAML file, converts it to an IR tree, exports the IR as XML,
-    /// renders the HTML output, and prints the IR structure to the console.
-    /// Collects performance metrics for observability.
+    /// Main entry point. Executes the ConversionPipeline and prints IR structure to console.
     /// </summary>
     private static void Main()
     {
         try
         {
-            var totalWatch = Stopwatch.StartNew();
+            var converter = new XmlToIrConverterRecursive();
+            var renderer = HtmlRendererFactory.Create();
+            var pipeline = new ConversionPipeline(converter, renderer);
 
-        var path = Path.Combine(AppContext.BaseDirectory, "sample2.xaml");
+            var inputPath = Path.Combine(AppContext.BaseDirectory, "sample.xaml");
+            var outputDirectory = AppContext.BaseDirectory;
 
-        // Phase 1: Load XAML
-        var loadWatch = Stopwatch.StartNew();
-        var loader = new XamlLoader();
-        var document = loader.Load(path);
-        loadWatch.Stop();
+            var metrics = pipeline.Run(inputPath, outputDirectory);
+            Console.WriteLine(metrics.ToString());
 
-        if (document.Root == null)
-            throw new InvalidOperationException("XML document has no root element.");
-
-        // Save original XML DOM
-        var xmlOutputPath = Path.Combine(AppContext.BaseDirectory, "XamlDom.xml");
-        document.Save(xmlOutputPath);
-
-        // Phase 2: Convert to IR
-        var conversionWatch = Stopwatch.StartNew();
-        IXmlToIrConverter converter = new XmlToIrConverterRecursive();
-        var ir = converter.Convert(document.Root);
-        conversionWatch.Stop();
-
-        // Count elements for metrics
-        var elementCount = CountElements(ir);
-
-        // Save IR representation
-        var irDoc = IntermediateRepresentationXmlExporter.Export(ir);
-        var irOutputPath = Path.Combine(AppContext.BaseDirectory, "Ir.xml");
-        irDoc.Save(irOutputPath);
-
-        // Phase 3: Render HTML
-        var renderingWatch = Stopwatch.StartNew();
-        var renderer = HtmlRendererFactory.Create();
-        var html = renderer.RenderDocument(ir);
-        renderingWatch.Stop();
-
-        var htmlOutputPath = Path.Combine(AppContext.BaseDirectory, "output.html");
-        File.WriteAllText(htmlOutputPath, html);
-
-        totalWatch.Stop();
-
-        // Collect and display metrics
-        var metrics = new PerformanceMetrics
-        {
-            LoadingTime = loadWatch.Elapsed,
-            ConversionTime = conversionWatch.Elapsed,
-            RenderingTime = renderingWatch.Elapsed,
-            TotalTime = totalWatch.Elapsed,
-            ElementCount = elementCount,
-            StyleCount = CountStyles(html)
-        };
-
-        Console.WriteLine(metrics.ToString());
-
-        
-        // Print IR structure to console
-        PrintIr(ir, 0);
+            // Load IR for inspection
+            var loader = new XamlLoader();
+            var document = loader.Load(inputPath);
+            if (document.Root != null)
+            {
+                var ir = converter.Convert(document.Root);
+                Console.WriteLine("\n═══ IR STRUCTURE ═══════════════════════════");
+                PrintIr(ir, 0);
+            }
         }
         catch (FileNotFoundException ex)
         {
-        Console.Error.WriteLine($"Input file not found: {ex.FileName}");
+            Console.Error.WriteLine($"Input file not found: {ex.FileName}");
         }
         catch (InvalidOperationException ex)
         {
-        Console.Error.WriteLine($"Conversion failed: {ex.Message}");
-        if (ex.InnerException != null)
-        Console.Error.WriteLine($"Caused by: {ex.InnerException.Message}");
+            Console.Error.WriteLine($"Conversion failed: {ex.Message}");
+            if (ex.InnerException != null)
+                Console.Error.WriteLine($"Caused by: {ex.InnerException.Message}");
         }
         catch (Exception ex)
         {
-        Console.Error.WriteLine($"Unexpected error: {ex}");
+            Console.Error.WriteLine($"Unexpected error: {ex}");
         }
         Console.ReadLine();
-    }
-
-    /// <summary>
-    /// Recursively counts all elements in the IR tree.
-    /// Used for metrics collection and scaling analysis.
-    /// </summary>
-    private static int CountElements(IntermediateRepresentationElement element)
-    {
-        int count = 1; // Count this element
-        foreach (var child in element.Children)
-            count += CountElements(child);
-        return count;
-    }
-
-    /// <summary>
-    /// Counts CSS classes in the rendered HTML output.
-    /// Provides insight into style deduplication effectiveness.
-    /// </summary>
-    private static int CountStyles(string html)
-    {
-        // Count occurrences of class= to estimate CSS class usage
-        return html.Split("class=").Length - 1;
     }
 
     /// <summary>
@@ -156,6 +84,4 @@ internal class Program
         foreach (var child in element.Children)
             PrintIr(child, indent + 2);
     }
-
-    #endregion
 }

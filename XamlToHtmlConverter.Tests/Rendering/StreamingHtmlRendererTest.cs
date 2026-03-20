@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System.Xml.Linq;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Rendering;
+using XamlToHtmlConverter.Rendering.StyleMappers;
 
 namespace XamlToHtmlConverter.Tests.Rendering;
 
@@ -26,7 +27,22 @@ public class StreamingHtmlRendererTest
     public void SetUp()
     {
         v_TagMapper = new DefaultElementTagMapper();
-        v_StyleBuilder = new DefaultStyleBuilder();
+        
+        // Provide default mappers to DefaultStyleBuilder (Dependency Inversion Principle)
+        var mappers = new IPropertyMapper[]
+        {
+            new WidthMapper(),
+            new HeightMapper(),
+            new TypographyMapper(),
+            new BorderMapper(),
+            new PaddingMapper(),
+            new MarginMapper(),
+            new MinMaxSizeMapper(),
+            new AlignmentMapper(),
+            new TextAlignmentMapper()
+        };
+        
+        v_StyleBuilder = new DefaultStyleBuilder(mappers);
         v_Renderer = new StreamingHtmlRenderer(v_TagMapper, v_StyleBuilder, Array.Empty<ILayoutRenderer>());
     }
 

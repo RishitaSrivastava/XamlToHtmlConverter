@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.ComponentBenchmarks-20260318-125339</title>
+<title>XamlToHtmlConverter.Benchmarks.ComponentBenchmarks-20260320-151204</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -15,9 +15,9 @@
 <pre><code>
 BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.7840)
 Unknown processor
-.NET SDK=10.0.103
-  [Host]     : .NET 8.0.24 (8.0.2426.7010), X64 RyuJIT AVX2
-  Job-AJXHXC : .NET 8.0.24 (8.0.2426.7010), X64 RyuJIT AVX2
+.NET SDK=10.0.201
+  [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-EJPQAA : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=5  WarmupCount=3  
 </code></pre>
@@ -25,11 +25,11 @@ Unknown processor
 <table>
 <thead><tr><th>           Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Rank</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>&#39;Simple Binding Parse&#39;</td><td>18.93 ns</td><td>5.643 ns</td><td>1.465 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
-</tr><tr><td>&#39;Complex Binding Parse&#39;</td><td>68.36 ns</td><td>3.372 ns</td><td>0.876 ns</td><td>4</td><td>0.0095</td><td>-</td><td>120 B</td>
-</tr><tr><td>&#39;Style Registration&#39;</td><td>31.28 ns</td><td>4.607 ns</td><td>0.713 ns</td><td>2</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>&#39;Style Cache Hit&#39;</td><td>40.54 ns</td><td>1.172 ns</td><td>0.181 ns</td><td>3</td><td>-</td><td>-</td><td>-</td>
-</tr><tr><td>&#39;Parser: XML to IR&#39;</td><td>257.08 ns</td><td>7.694 ns</td><td>1.998 ns</td><td>5</td><td>0.1135</td><td>0.0005</td><td>1424 B</td>
+</thead><tbody><tr><td>&#39;Simple Binding Parse&#39;</td><td>13.91 ns</td><td>2.042 ns</td><td>0.530 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
+</tr><tr><td>&#39;Complex Binding Parse&#39;</td><td>64.22 ns</td><td>15.133 ns</td><td>3.930 ns</td><td>4</td><td>0.0095</td><td>-</td><td>120 B</td>
+</tr><tr><td>&#39;Style Registration&#39;</td><td>28.11 ns</td><td>2.203 ns</td><td>0.572 ns</td><td>2</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>&#39;Style Cache Hit&#39;</td><td>36.83 ns</td><td>0.491 ns</td><td>0.076 ns</td><td>3</td><td>-</td><td>-</td><td>-</td>
+</tr><tr><td>&#39;Parser: XML to IR&#39;</td><td>220.94 ns</td><td>24.479 ns</td><td>6.357 ns</td><td>5</td><td>0.1135</td><td>0.0007</td><td>1424 B</td>
 </tr><tr><td>&#39;XamlLoader: Load&#39;</td><td>NA</td><td>NA</td><td>NA</td><td>?</td><td>-</td><td>-</td><td>-</td>
 </tr></tbody></table>
 </body>

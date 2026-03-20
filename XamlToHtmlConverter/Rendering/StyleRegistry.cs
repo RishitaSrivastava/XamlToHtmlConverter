@@ -9,7 +9,7 @@ namespace XamlToHtmlConverter.Rendering
     /// to generated CSS class names and producing a consolidated HTML style block.
     /// Deduplicates styles so identical declarations share a single class.
     /// </summary>
-    public class StyleRegistry
+    public class StyleRegistry : IStyleRegistry
     {
         #region Private Data
 

@@ -410,3 +410,17 @@ Perfect for tracking the Phase optimization improvements!
 
 **Generated**: March 18, 2026  
 **Next Step**: Run `dotnet run -c Release` and review baseline results
+
+**Generated**: March 20, 2026 
+# Run a specific benchmark suite only
+cd XamlToHtmlConverter.Benchmarks
+dotnet run -c Release -f "ConversionPipeline*"
+
+# Run with shorter iteration count for faster results
+dotnet run -c Release --job short
+
+# Check if reports exist (indicates successful run)
+Test-Path "BenchmarkDotNet.Artifacts/results/*.html"
+
+# Quick Verification Command:
+Get-ChildItem "BenchmarkDotNet.Artifacts/results/" -Filter "*.html" | Measure-Object

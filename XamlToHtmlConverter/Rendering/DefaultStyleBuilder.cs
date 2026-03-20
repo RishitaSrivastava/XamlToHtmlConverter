@@ -12,24 +12,24 @@ namespace XamlToHtmlConverter.Rendering
     /// Default implementation of <see cref="IStyleBuilder"/>.
     /// Generates inline CSS styles from standard element properties,
     /// attached layout properties, and parent layout context.
+    /// 
+    /// Satisfies Dependency Inversion Principle:
+    ///   - Property mappers are injected through constructor
+    ///   - Allows substitution and testing of mapper implementations
+    ///   - Factory provides default set of mappers
     /// </summary>
     public class DefaultStyleBuilder : IStyleBuilder
     {
         private readonly PropertyMapperEngine v_PropertyEngine;
-        public DefaultStyleBuilder()
+
+        /// <summary>
+        /// Initializes with the specified property mappers.
+        /// Enables dependency injection and extension (D and O principles).
+        /// </summary>
+        /// <param name="mappers">The collection of property mappers to use.</param>
+        public DefaultStyleBuilder(IEnumerable<IPropertyMapper> mappers)
         {
-            v_PropertyEngine = new PropertyMapperEngine(new IPropertyMapper[]
-            {
-        new WidthMapper(),
-        new HeightMapper(),
-        new TypographyMapper(),
-        new BorderMapper(),
-        new PaddingMapper(),
-        new MarginMapper(),
-        new MinMaxSizeMapper(),
-        new AlignmentMapper(),
-        new TextAlignmentMapper()
-            });
+            v_PropertyEngine = new PropertyMapperEngine(mappers);
         }
 
         #region Public Methods

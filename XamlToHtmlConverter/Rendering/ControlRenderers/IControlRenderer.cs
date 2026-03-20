@@ -7,7 +7,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 
 /// <summary>
 /// Defines a contract for rendering specific control types with custom HTML generation logic.
-/// Implementations provide specialized rendering for controls like TextBox, CheckBox, and ListBox
+/// Base interface: Implementations provide specialized rendering for controls like TextBox, CheckBox, and ListBox
 /// that require non-standard HTML structure or attributes.
 /// </summary>
 public interface IControlRenderer
@@ -18,7 +18,15 @@ public interface IControlRenderer
     /// <param name="element">The IR element to evaluate.</param>
     /// <returns><c>true</c> if this renderer supports the element type; otherwise, <c>false</c>.</returns>
     bool CanHandle(IntermediateRepresentationElement element);
+}
 
+/// <summary>
+/// Defines a contract for renderers that contribute custom attributes to HTML elements.
+/// Clients should implement IAttributeRenderer when only attribute customization is needed,
+/// not content customization, satisfying Interface Segregation Principle.
+/// </summary>
+public interface IAttributeRenderer : IControlRenderer
+{
     /// <summary>
     /// Generates control-specific HTML attributes and adds them to the attribute buffer.
     /// Used to emit specialized attributes like "type", "checked", "value", etc.
@@ -28,7 +36,15 @@ public interface IControlRenderer
     void RenderAttributes(
         IntermediateRepresentationElement element,
         AttributeBuffer attributes);
+}
 
+/// <summary>
+/// Defines a contract for renderers that override content generation.
+/// Clients should implement IContentRenderer when custom content rendering is needed,
+/// not attribute customization, satisfying Interface Segregation Principle.
+/// </summary>
+public interface IContentRenderer : IControlRenderer
+{
     /// <summary>
     /// Generates the inner HTML content for the control.
     /// Allows custom rendering of child elements or content that differs from the default behavior.

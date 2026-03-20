@@ -43,7 +43,7 @@ namespace XamlToHtmlConverter.Rendering
         /// <summary>
         /// Holds the style registry used to deduplicate inline CSS styles into reusable classes.
         /// </summary>
-        private readonly StyleRegistry v_StyleRegistry = new();
+        private readonly IStyleRegistry v_StyleRegistry;
 
         /// <summary>
         /// Caches layout renderer resolution by element type to avoid repeated LINQ queries.
@@ -59,15 +59,13 @@ namespace XamlToHtmlConverter.Rendering
 
         private readonly ControlRendererRegistry v_ControlRegistry;
 
-        private readonly TemplateEngine v_TemplateEngine = new();
+        private readonly ITemplateEngine v_TemplateEngine;
 
         private readonly BehaviorRegistry v_BehaviorRegistry;
-
-        private static readonly Dictionary<int, string> v_IndentCache = new();
         #endregion
 
         private static string GetIndent(int indent)
-        => new string(' ', indent);
+        => IndentCache.Get(indent);
 
         #region Constructors
 
@@ -78,13 +76,19 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="layoutRenderers">The collection of layout-specific CSS renderers.</param>
         /// <param name="styleBuilder">The builder for generating inline CSS from element properties.</param>
         /// <param name="eventExtractor">The extractor for converting XAML event handlers to HTML attributes.</param>
+        /// <param name="controlRegistry">The registry of control-specific renderers.</param>
+        /// <param name="behaviorRegistry">The registry of behavior handlers.</param>
+        /// <param name="styleRegistry">The style registry for CSS deduplication (injected).</param>
+        /// <param name="templateEngine">The template expansion engine (injected).</param>
         public HtmlRenderer(
             IElementTagMapper tagMapper,
             IEnumerable<ILayoutRenderer> layoutRenderers,
             IStyleBuilder styleBuilder,
             IEventExtractor eventExtractor,
             ControlRendererRegistry controlRegistry,
-            BehaviorRegistry behaviorRegistry)
+            BehaviorRegistry behaviorRegistry,
+            IStyleRegistry styleRegistry,
+            ITemplateEngine templateEngine)
         {
             v_TagMapper = tagMapper;
             v_LayoutRenderers = layoutRenderers;
@@ -92,6 +96,8 @@ namespace XamlToHtmlConverter.Rendering
             v_EventExtractor = eventExtractor;
             v_ControlRegistry = controlRegistry;
             v_BehaviorRegistry = behaviorRegistry;
+            v_StyleRegistry = styleRegistry;
+            v_TemplateEngine = templateEngine;
         }
 
 
@@ -156,9 +162,10 @@ namespace XamlToHtmlConverter.Rendering
             var attributes = new AttributeBuffer();
             var controlRenderer = v_ControlRegistry.Resolve(element);
 
-            if (controlRenderer != null)
+            // Apply control-specific attributes (via IAttributeRenderer)
+            if (controlRenderer is IAttributeRenderer attributeRenderer)
             {
-                controlRenderer.RenderAttributes(element, attributes);
+                attributeRenderer.RenderAttributes(element, attributes);
             }
 
             // Emit data-binding-* attributes
@@ -209,54 +216,60 @@ namespace XamlToHtmlConverter.Rendering
 
             attributes.WriteTo(sb);
             sb.Append(">");
-            controlRenderer?.RenderContent(
-            element,
-            sb,
-            indent,
-            (child, builder, childIndent) =>
+            
+            // Apply control-specific content rendering (via IContentRenderer)
+            if (controlRenderer is IContentRenderer contentRenderer)
             {
-                RenderElement(child, builder, childIndent, element.Type, parentOrientation);
-            });
-
-
-
-            var content = ResolveElementContent(element);
-
-            if (!string.IsNullOrWhiteSpace(content))
-            {
-                sb.Append(content);
-            }
-
-            // Render children recursively
-            if (element.Children.Count > 0)
-            {
-                sb.AppendLine();
-
-                for (int i = 0; i < element.Children.Count; i++)
-                {
-                    var child = element.Children[i];
-
-                    string? orientation = null;
-
-                    if (element.Type == "StackPanel" &&
-                        element.Properties.TryGetValue("Orientation", out var o))
+                contentRenderer.RenderContent(
+                    element,
+                    sb,
+                    indent,
+                    (child, builder, childIndent) =>
                     {
-                        orientation = o;
-                    }
+                        RenderElement(child, builder, childIndent, element.Type, parentOrientation);
+                    });
+            }
+            else
+            {
+                // Default content rendering
+                var content = ElementContentResolver.Resolve(element);
 
-                    RenderElement(child, sb, indent + 2, element.Type, orientation);
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    sb.Append(content);
                 }
 
-                sb.Append(indentation);
+                // Render children recursively
+                if (element.Children.Count > 0)
+                {
+                    sb.AppendLine();
+
+                    for (int i = 0; i < element.Children.Count; i++)
+                    {
+                        var child = element.Children[i];
+
+                        string? orientation = null;
+
+                        if (element.Type == "StackPanel" &&
+                            element.Properties.TryGetValue("Orientation", out var o))
+                        {
+                            orientation = o;
+                        }
+
+                        RenderElement(child, sb, indent + 2, element.Type, orientation);
+                    }
+
+                    sb.Append(indentation);
+                }
             }
 
             sb.AppendLine($"</{tag}>");
             }
             catch (Exception ex) when (ex is not InvalidOperationException)
             {
-            throw new InvalidOperationException(
-            $"Failed to render element '<{element.Type}>' at indent depth {indent}.",
-            ex);
+                throw new InvalidOperationException(
+                    $"Failed to render element '<{element.Type}>' at indent depth {indent}.",
+                    ex);
             }
 
             

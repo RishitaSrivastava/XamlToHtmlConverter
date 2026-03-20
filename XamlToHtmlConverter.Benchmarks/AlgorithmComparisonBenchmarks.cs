@@ -25,12 +25,41 @@ public class AlgorithmComparisonBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        var baseDir = AppContext.BaseDirectory;
-        v_SampleXamlPath = Path.Combine(baseDir, "..", "..", "..", "XamlToHtmlConverter", "sample.xaml");
+        // Try local directory first (for Release builds)
+        var localPath = Path.Combine(AppContext.BaseDirectory, "sample.xaml");
+        if (File.Exists(localPath))
+        {
+            v_SampleXamlPath = localPath;
+        }
+        else
+        {
+            // Fall back to solution root search
+            var solutionRoot = FindSolutionRoot(AppContext.BaseDirectory);
+            v_SampleXamlPath = Path.Combine(solutionRoot, "XamlToHtmlConverter", "sample.xaml");
+        }
 
         var loader = new XamlLoader();
         var doc = loader.Load(v_SampleXamlPath);
         v_TestElement = doc.Root;
+    }
+
+    /// <summary>
+    /// Finds the solution root by traversing up the directory tree.
+    /// </summary>
+    private static string FindSolutionRoot(string startPath)
+    {
+        var currentPath = startPath;
+        while (currentPath != null)
+        {
+            var projectPath = Path.Combine(currentPath, "XamlToHtmlConverter");
+            if (Directory.Exists(projectPath) && File.Exists(Path.Combine(projectPath, "sample.xaml")))
+                return currentPath;
+
+            var parent = Directory.GetParent(currentPath);
+            currentPath = parent?.FullName;
+        }
+
+        throw new InvalidOperationException("Could not locate solution root with XAML files.");
     }
 
     /// <summary>
