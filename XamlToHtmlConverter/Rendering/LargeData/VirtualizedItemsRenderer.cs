@@ -1,5 +1,8 @@
 ﻿using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
+using XamlToHtmlConverter.Rendering.LargeData;
+
+namespace XamlToHtmlConverter.Rendering.LargeData;
 
 public class VirtualizedItemsRenderer
 {

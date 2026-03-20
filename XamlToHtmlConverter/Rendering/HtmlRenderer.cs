@@ -66,6 +66,9 @@ namespace XamlToHtmlConverter.Rendering
         private static readonly Dictionary<int, string> v_IndentCache = new();
         #endregion
 
+        private static string GetIndent(int indent)
+        => new string(' ', indent);
+
         #region Constructors
 
         /// <summary>
@@ -143,7 +146,9 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="parentOrientation">The orientation of the parent container, or null if not applicable.</param>
         private void RenderElement(IntermediateRepresentationElement element, StringBuilder sb, int indent, string? parentLayoutType, string? parentOrientation)
         {
-            var indentation = GetIndent(indent);
+            try
+            {
+                var indentation = GetIndent(indent);
             var tag = ResolveTagMapping(element.Type);
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
@@ -246,6 +251,15 @@ namespace XamlToHtmlConverter.Rendering
             }
 
             sb.AppendLine($"</{tag}>");
+            }
+            catch (Exception ex) when (ex is not InvalidOperationException)
+            {
+            throw new InvalidOperationException(
+            $"Failed to render element '<{element.Type}>' at indent depth {indent}.",
+            ex);
+            }
+
+            
         }
 
         /// <summary>
@@ -343,16 +357,6 @@ namespace XamlToHtmlConverter.Rendering
             RenderElement(element, sb, indent, parentLayoutType, parentOrientation);
         }
 
-        private static string GetIndent(int indent)
-        {
-            if (!v_IndentCache.TryGetValue(indent, out var value))
-            {
-                value = new string(' ', indent);
-                v_IndentCache[indent] = value;
-            }
-
-            return value;
-        }
         #endregion
     }
 }

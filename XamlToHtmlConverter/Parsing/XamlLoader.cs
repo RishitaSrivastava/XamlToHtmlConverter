@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+using System.Xml;
 using System.Xml.Linq;
 
 namespace XamlToHtmlConverter.Parsing;
@@ -27,7 +28,15 @@ public class XamlLoader
         if (!File.Exists(path))
             throw new FileNotFoundException("XAML file not found.", path);
 
+        try
+        {
         return XDocument.Load(path);
+        }
+        catch (XmlException ex)
+        {
+        throw new InvalidOperationException($"Failed to parse XAML file at '{path}'.",
+        ex);
+        }
     }
 
     #endregion
