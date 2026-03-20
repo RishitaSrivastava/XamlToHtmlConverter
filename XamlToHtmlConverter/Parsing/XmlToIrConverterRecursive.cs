@@ -1,6 +1,7 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Parsing.PropertyElements;
@@ -62,11 +63,25 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
     /// <returns>The resulting <see cref="IntermediateRepresentationElement"/>.</returns>
     private IntermediateRepresentationElement ConvertElement(XElement element)
     {
+        try
+        {
         var ir = new IntermediateRepresentationElement(element.Name.LocalName);
         ProcessAttributes(element, ir);
         ProcessText(element, ir);
         ProcessChildren(element, ir);
         return ir;
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+        // Retrieve line info if the XElement was loaded with line tracking
+        var lineInfo = (element as IXmlLineInfo)?.HasLineInfo() == true
+        ? $" (line {((IXmlLineInfo)element).LineNumber})"
+        : string.Empty;
+        throw new InvalidOperationException(
+        $"Failed to convert XAML element '<{element.Name.LocalName}>'{lineInfo}.",
+        ex);
+        }
+
     }
 
     /// <summary>
@@ -432,6 +447,50 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
 
         return value.Replace("{StaticResource", "").Replace("}", "").Trim();
     }
+
+    /// <summary>
+    /// Applies style setters to an element without inheritance handling.
+    /// </summary>
+    /// <param name="element">The IR element to apply setters to.</param>
+    /// <param name="style">The style containing the setters.</param>
+    private void ApplyStyleSetters(
+        IntermediateRepresentationElement element,
+        IntermediateRepresentationStyle style)
+    {
+        if (style?.Setters == null)
+            return;
+
+        foreach (var setter in style.Setters)
+        {
+            if (!element.Properties.ContainsKey(setter.Key))
+                element.Properties[setter.Key] = setter.Value;
+        }
+    }
+
+    private void ResolveStaticResource(
+        IntermediateRepresentationElement element,
+        string propertyName,
+        string resourceKey)
+        {
+        // Walk up the tree to find the resource
+        var owner = element;
+        while (owner != null)
+        {
+        if (owner.Resources.TryGetValue(resourceKey, out var style))
+        {
+        ApplyStyleSetters(element, style);
+        return;
+        }
+        owner = owner.Parent;
+        }
+        // Resource not found — do NOT silently ignore it
+        // Option A: log a warning (preferred for a converter tool)
+        Console.Error.WriteLine(
+            $"[Warning] StaticResource '{resourceKey}' referenced by '{element.Type}.{propertyName}' could not be resolved.");
+        // Option B: throw in strict mode (add a StrictMode flag to the converter)
+        // throw new InvalidOperationException(
+        //     $"StaticResource '{resourceKey}' not found for element '{element.Type}'.");
+        }
 
     #endregion
 }

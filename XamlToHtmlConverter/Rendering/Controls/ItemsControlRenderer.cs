@@ -3,6 +3,7 @@
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
+using XamlToHtmlConverter.Rendering.LargeData;
 
 namespace XamlToHtmlConverter.Rendering.Controls
 {

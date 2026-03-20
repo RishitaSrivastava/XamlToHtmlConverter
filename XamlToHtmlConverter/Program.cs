@@ -28,7 +28,9 @@ internal class Program
     /// </summary>
     private static void Main()
     {
-        var totalWatch = Stopwatch.StartNew();
+        try
+        {
+            var totalWatch = Stopwatch.StartNew();
 
         var path = Path.Combine(AppContext.BaseDirectory, "sample2.xaml");
 
@@ -83,8 +85,24 @@ internal class Program
 
         Console.WriteLine(metrics.ToString());
 
+        
         // Print IR structure to console
         PrintIr(ir, 0);
+        }
+        catch (FileNotFoundException ex)
+        {
+        Console.Error.WriteLine($"Input file not found: {ex.FileName}");
+        }
+        catch (InvalidOperationException ex)
+        {
+        Console.Error.WriteLine($"Conversion failed: {ex.Message}");
+        if (ex.InnerException != null)
+        Console.Error.WriteLine($"Caused by: {ex.InnerException.Message}");
+        }
+        catch (Exception ex)
+        {
+        Console.Error.WriteLine($"Unexpected error: {ex}");
+        }
         Console.ReadLine();
     }
 
