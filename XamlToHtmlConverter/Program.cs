@@ -30,7 +30,7 @@ internal class Program
     {
         var totalWatch = Stopwatch.StartNew();
 
-        var path = Path.Combine(AppContext.BaseDirectory, "sample.xaml");
+        var path = Path.Combine(AppContext.BaseDirectory, "sample2.xaml");
 
         // Phase 1: Load XAML
         var loadWatch = Stopwatch.StartNew();
