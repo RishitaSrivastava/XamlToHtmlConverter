@@ -14,7 +14,7 @@ public class ListBoxRenderer : IControlRenderer
     IntermediateRepresentationElement element,
     AttributeBuffer attributes)
     {
-        attributes.Add("multiple", null);
+        attributes.Add("multiple", "");
     }
 
     public void RenderContent(
