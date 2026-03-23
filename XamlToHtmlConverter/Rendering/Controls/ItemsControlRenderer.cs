@@ -22,7 +22,7 @@ namespace XamlToHtmlConverter.Rendering.Controls
                 AttributeBuffer attributes)
             {
                 if (element.Type == "ListBox")
-                    attributes.Add("multiple", "");
+                    attributes.Add("multiple", string.Empty);
 
                 if (element.Bindings.TryGetValue("ItemsSource", out var binding)
                     && !string.IsNullOrEmpty(binding?.Path))
