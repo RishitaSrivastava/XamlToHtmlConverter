@@ -10,6 +10,20 @@ public class PaddingMapper : IPropertyMapper
         return propertyName == "Padding";
     }
 
+    /// <summary>
+    /// Parses thickness values in both space-separated (XAML: "0 5")
+    /// and comma-separated (internal: "0,5") formats.
+    /// </summary>
+    private static string[] ParseThickness(string value)
+    {
+        // Try comma-separated first
+        if (value.Contains(','))
+            return value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+        
+        // Fall back to space-separated (XAML format)
+        return value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+    }
+
     public void Apply(
         IntermediateRepresentationElement element,
         string propertyName,
@@ -21,7 +35,7 @@ public class PaddingMapper : IPropertyMapper
         if (string.IsNullOrWhiteSpace(value))
             return;
 
-        var parts = value.Split(',');
+        var parts = ParseThickness(value);
 
         if (parts.Length == 1 && int.TryParse(parts[0], out var all))
         {
