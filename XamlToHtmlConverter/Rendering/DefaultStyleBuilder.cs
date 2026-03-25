@@ -491,16 +491,23 @@ namespace XamlToHtmlConverter.Rendering
 
         /// <summary>
         /// Converts a XAML Thickness value into a CSS spacing shorthand string.
-        /// Supports single, two-value (left,top), and four-value (left,top,right,bottom) formats.
+        /// Supports single, two-value, and four-value formats in both space-separated 
+        /// (XAML: "0 5") and comma-separated (internal: "0,5") formats.
         /// </summary>
-        /// <param name="thickness">The raw XAML Thickness string (e.g., "10", "10,5", "10,5,10,5").</param>
+        /// <param name="thickness">The raw XAML Thickness string (e.g., "10", "0 5", "0,5", "10,5,10,5").</param>
         /// <returns>The equivalent CSS margin or padding value string (e.g., "10px", "5px 10px").</returns>
         private string ConvertThickness(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
                 return "0";
 
-            var parts = value.Split(',');
+            // Parse both space-separated (XAML format "0 5") and comma-separated ("0,5") formats
+            var parts = value.Contains(',') 
+                ? value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                : value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Trim whitespace from each part
+            parts = parts.Select(p => p.Trim()).ToArray();
 
             if (parts.Length == 1)
             {

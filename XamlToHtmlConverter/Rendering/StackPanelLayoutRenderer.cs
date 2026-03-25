@@ -26,6 +26,8 @@ namespace XamlToHtmlConverter.Rendering
         /// <summary>
         /// Applies flexbox layout CSS styles based on the StackPanel's Orientation property.
         /// Emits column direction for Vertical (default) or row direction for Horizontal.
+        /// For Horizontal orientation, also adds align-items:center for vertical centering.
+        /// For Vertical orientation with HorizontalAlignment=Center, adds align-items:center for horizontal centering.
         /// </summary>
         /// <param name="element">The StackPanel IR element to render layout for.</param>
         /// <param name="styleBuilder">The string builder to append CSS styles to.</param>
@@ -37,10 +39,23 @@ namespace XamlToHtmlConverter.Rendering
             if (element.Properties.TryGetValue("Orientation", out var orientation))
             {
                 if (orientation.Equals("Horizontal", StringComparison.OrdinalIgnoreCase))
+                {
                     direction = "row";
+                    // Center items vertically in horizontal StackPanel for consistent alignment
+                    styleBuilder.Append("align-items:center;");
+                }
             }
-            styleBuilder.Append($"flex-direction:{direction};");
             
+            // For vertical StackPanel with HorizontalAlignment="Center", center children horizontally
+            if (direction == "column" && element.Properties.TryGetValue("HorizontalAlignment", out var hAlign))
+            {
+                if (hAlign.Equals("Center", StringComparison.OrdinalIgnoreCase))
+                {
+                    styleBuilder.Append("align-items:center;");
+                }
+            }
+            
+            styleBuilder.Append($"flex-direction:{direction};");
         }
 
         #endregion
