@@ -81,6 +81,9 @@ public class ConversionPipelineBenchmarks
     [Benchmark(Description = "Sample XAML Conversion")]
     public string ConvertSampleXaml()
     {
+        if (v_SampleXamlPath == null)
+            throw new InvalidOperationException("Sample XAML path not initialized");
+
         var loader = new XamlLoader();
         var document = loader.Load(v_SampleXamlPath);
 
@@ -110,6 +113,9 @@ public class ConversionPipelineBenchmarks
     [Benchmark(Description = "Large XAML Conversion")]
     public string ConvertLargeXaml()
     {
+        if (v_LargeXamlPath == null)
+            throw new InvalidOperationException("Large XAML path not initialized");
+
         var loader = new XamlLoader();
         var document = loader.Load(v_LargeXamlPath);
 
@@ -134,6 +140,9 @@ public class ConversionPipelineBenchmarks
     [Benchmark(Description = "Parsing Phase Only")]
     public object ParseOnly()
     {
+        if (v_SampleXamlPath == null)
+            throw new InvalidOperationException("Sample XAML path not initialized");
+
         var loader = new XamlLoader();
         var document = loader.Load(v_SampleXamlPath);
 
@@ -155,6 +164,9 @@ public class ConversionPipelineBenchmarks
     [Benchmark(Description = "Rendering Phase Only")]
     public string RenderOnly()
     {
+        if (v_SampleXamlPath == null)
+            throw new InvalidOperationException("Sample XAML path not initialized");
+
         var loader = new XamlLoader();
         var document = loader.Load(v_SampleXamlPath);
 

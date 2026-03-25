@@ -1,5 +1,10 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+#pragma warning disable CS0618
+// This file intentionally uses the deprecated XmlToIrConverterLinqStyle for algorithm comparison.
+// Benchmarks compare performance metrics between the legacy LINQ-based parser and the current
+// recursive implementation to demonstrate performance gains from optimization efforts.
+
 using BenchmarkDotNet.Attributes;
 using XamlToHtmlConverter.Parsing;
 
@@ -199,3 +204,5 @@ public class StressBenchmarks
         }
     }
 }
+
+#pragma warning restore CS0618
