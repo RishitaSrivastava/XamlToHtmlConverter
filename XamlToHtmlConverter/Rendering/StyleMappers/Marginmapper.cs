@@ -10,6 +10,20 @@ public class MarginMapper : IPropertyMapper
         return propertyName == "Margin";
     }
 
+    /// <summary>
+    /// Parses thickness values in both space-separated (XAML: "0 5")
+    /// and comma-separated (internal: "0,5") formats.
+    /// </summary>
+    private static string[] ParseThickness(string value)
+    {
+        // Try comma-separated first
+        if (value.Contains(','))
+            return value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+        
+        // Fall back to space-separated (XAML format)
+        return value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+    }
+
     public void Apply(
         IntermediateRepresentationElement element,
         string propertyName,
@@ -21,7 +35,7 @@ public class MarginMapper : IPropertyMapper
         if (string.IsNullOrWhiteSpace(value))
             return;
 
-        var parts = value.Split(',');
+        var parts = ParseThickness(value);
 
         // Margin="10"
         if (parts.Length == 1 && int.TryParse(parts[0], out var all))
@@ -30,19 +44,21 @@ public class MarginMapper : IPropertyMapper
             return;
         }
 
-        // Margin="10,5"
+        // Margin="10,5"  - WPF format: "horizontalMargin,verticalMargin"
+        // Converts to CSS: margin: top right bottom left = vertical horizontal vertical horizontal
         if (parts.Length == 2)
         {
-            if (int.TryParse(parts[0], out var vertical) &&
-                int.TryParse(parts[1], out var horizontal))
+            if (int.TryParse(parts[0], out var horizontal) &&
+                int.TryParse(parts[1], out var vertical))
             {
+                // CSS margin format: top right bottom left
                 sb.Append($"margin:{vertical}px {horizontal}px;");
             }
 
             return;
         }
 
-        // Margin="5,10,5,10"
+        // Margin="5,10,5,10" or interpreted as left,top,right,bottom
         if (parts.Length == 4)
         {
             if (int.TryParse(parts[0], out var left) &&

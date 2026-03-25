@@ -23,7 +23,7 @@ internal class Program
             var renderer = HtmlRendererFactory.Create();
             var pipeline = new ConversionPipeline(converter, renderer);
 
-            var inputPath = Path.Combine(AppContext.BaseDirectory, "sample.xaml");
+            var inputPath = Path.Combine(AppContext.BaseDirectory, "sample2.xaml");
             var outputDirectory = AppContext.BaseDirectory;
 
             var metrics = pipeline.Run(inputPath, outputDirectory);

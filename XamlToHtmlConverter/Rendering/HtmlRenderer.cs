@@ -5,6 +5,7 @@ using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Rendering.Behavior;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
+using XamlToHtmlConverter.Rendering.StyleMappers;
 using XamlToHtmlConverter.Rendering.Templates;
 
 namespace XamlToHtmlConverter.Rendering
@@ -162,7 +163,6 @@ namespace XamlToHtmlConverter.Rendering
             var tag = ResolveTagMapping(element.Type);
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
-            sb.Append($"{indentation}<{tag}");
             var attributes = new AttributeBuffer();
             var controlRenderer = v_ControlRegistry.Resolve(element);
 
@@ -188,13 +188,18 @@ namespace XamlToHtmlConverter.Rendering
                 attributes.Add(behavior.Key, behavior.Value);
             }
 
-
             // Apply CSS class (deduplicated style)
             if (!string.IsNullOrWhiteSpace(style))
             {
                 var className = v_StyleRegistry.Register(style);
                 attributes.Add("class", className);
             }
+
+            // Check for CheckBox/RadioButton with Content property (scoped contentValue declaration)
+            string? contentValue = null;
+            bool isCheckboxWithContent = (tag == "input") &&
+                                        (element.Type == "CheckBox" || element.Type == "RadioButton") &&
+                                        element.Properties.TryGetValue("Content", out contentValue);
 
             // Self-closing elements (input, img)
             if (tag == "input" || tag == "img")
@@ -205,18 +210,52 @@ namespace XamlToHtmlConverter.Rendering
                     attributes.Add("src", src);
                 }
 
-                attributes.WriteTo(sb);
-                sb.Append(" />");
-
-                if ((element.Type == "CheckBox" || element.Type == "RadioButton") &&
-                    element.Properties.TryGetValue("Content", out var contentValue))
+                if (isCheckboxWithContent)
                 {
-                    sb.Append($" {contentValue}");
+                    // Wrap checkbox/radiobutton with label for proper styling and semantics
+                    sb.Append($"{indentation}<label");
+                    
+                    // Apply label styling (flexbox to align checkbox and text)
+                    var labelStyle = "display:flex;align-items:center;gap:8px;";
+                    if (!string.IsNullOrWhiteSpace(style))
+                    {
+                        var className = v_StyleRegistry.Register(labelStyle + style);
+                        sb.Append($" class=\"{className}\"");
+                    }
+                    else
+                    {
+                        var className = v_StyleRegistry.Register(labelStyle);
+                        sb.Append($" class=\"{className}\"");
+                    }
+                    sb.AppendLine(">");
+                    sb.Append(GetIndent(indent + 2));
+                    sb.Append($"<{tag}");
+                    
+                    // Apply smaller checkbox style (not the 32px form element height)
+                    var checkboxStyle = "width:18px;height:18px;margin:0px 4px;";
+                    var checkboxClassName = v_StyleRegistry.Register(checkboxStyle);
+                    attributes.Add("class", checkboxClassName);
+                    
+                    attributes.WriteTo(sb);
+                    sb.Append(" />");
+                    sb.AppendLine();
+                    sb.Append(GetIndent(indent + 2));
+                    sb.Append(contentValue);
+                    sb.AppendLine();
+                    sb.Append(GetIndent(indent));
+                    sb.AppendLine("</label>");
+                    return;
                 }
 
+                // Normal input/img rendering (without Content property)
+                sb.Append($"{indentation}<{tag}");
+                attributes.WriteTo(sb);
+                sb.Append(" />");
                 sb.AppendLine();
                 return;
             }
+
+            sb.Append($"{indentation}<{tag}");
 
             attributes.WriteTo(sb);
             sb.Append(">");
@@ -299,6 +338,12 @@ namespace XamlToHtmlConverter.Rendering
             // Apply property-based styling (width, margin, alignment, grid positioning, etc.)
             var context = new LayoutContext(parentLayoutType, parentOrientation);
             sb.Append(v_StyleBuilder.Build(element, context));
+
+            // Apply default form element styling (heights, vertical alignment)
+            FormElementMapper.ApplyFormElementStyle(element, sb);
+
+            // Apply default TextBlock styling (margin, line-height) for visibility
+            TextBlockMapper.ApplyTextBlockStyle(element, sb);
 
             return sb.ToString();
         }
