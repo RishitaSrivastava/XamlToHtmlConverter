@@ -37,7 +37,7 @@ public class PasswordBoxRenderer : IControlRenderer
             attributes.Add("readonly", "");
 
         // Handle bindings if any
-        if (element.Bindings.TryGetValue("Password", out var binding))
+        if (element.Bindings.TryGetValue("Password", out var binding) && !string.IsNullOrEmpty(binding.Path))
             attributes.Add("data-binding-password", binding.Path);
     }
 }

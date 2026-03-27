@@ -1,5 +1,7 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
+#pragma warning disable CS0618 // Type or member is obsolete
+
 using System.Xml.Linq;
 using NUnit.Framework;
 using XamlToHtmlConverter.Parsing;
@@ -152,3 +154,5 @@ namespace XamlToHtmlConverter.Tests.Parsing
         #endregion
     }
 }
+
+#pragma warning restore CS0618 // Type or member is obsolete

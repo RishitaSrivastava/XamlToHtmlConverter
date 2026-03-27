@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.StreamingPipelineBenchmarks-20260323-162152</title>
+<title>XamlToHtmlConverter.Benchmarks.StreamingPipelineBenchmarks-20260327-111055</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,20 +13,20 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.7840)
+BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
 Unknown processor
 .NET SDK=10.0.201
   [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
-  Job-WGVEWB : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-HGHKHI : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=3  WarmupCount=2  
 </code></pre>
 
 <table>
-<thead><tr><th>                           Method</th><th>Mean</th><th> Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
+<thead><tr><th>                           Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>&#39;End-to-End: XAML → File (Streaming)&#39;</td><td>669.39 &mu;s</td><td>1,574.794 &mu;s</td><td>86.320 &mu;s</td><td>-</td><td>1169 B</td>
-</tr><tr><td>&#39;End-to-End: XAML → String (Streaming)&#39;</td><td>14.35 &mu;s</td><td>2.560 &mu;s</td><td>0.140 &mu;s</td><td>0.0610</td><td>872 B</td>
+</thead><tbody><tr><td>&#39;End-to-End: XAML → File (Streaming)&#39;</td><td>609.66 &mu;s</td><td>31.395 &mu;s</td><td>1.721 &mu;s</td><td>-</td><td>1169 B</td>
+</tr><tr><td>&#39;End-to-End: XAML → String (Streaming)&#39;</td><td>14.12 &mu;s</td><td>2.247 &mu;s</td><td>0.123 &mu;s</td><td>0.0610</td><td>872 B</td>
 </tr></tbody></table>
 </body>
 </html>

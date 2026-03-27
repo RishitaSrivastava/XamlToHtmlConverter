@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.AlgorithmComparisonBenchmarks-20260323-162008</title>
+<title>XamlToHtmlConverter.Benchmarks.AlgorithmComparisonBenchmarks-20260327-110916</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,11 +13,11 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.7840)
+BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
 Unknown processor
 .NET SDK=10.0.201
   [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
-  Job-LMRASR : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-AWBITN : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=5  WarmupCount=3  
 </code></pre>
@@ -25,10 +25,10 @@ Unknown processor
 <table>
 <thead><tr><th>                            Method</th><th>  Mean</th><th> Error</th><th>StdDev</th><th>Rank</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>XmlToIrConverterRecursive</td><td>19,991.17 ns</td><td>2,897.515 ns</td><td>752.476 ns</td><td>4</td><td>6.3477</td><td>1.9226</td><td>79928 B</td>
-</tr><tr><td>XmlToIrConverterLinqStyle</td><td>17,022.15 ns</td><td>458.858 ns</td><td>71.009 ns</td><td>3</td><td>5.6763</td><td>1.5564</td><td>71512 B</td>
-</tr><tr><td>&#39;Binding Parse: Simple&#39;</td><td>15.66 ns</td><td>1.207 ns</td><td>0.314 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
-</tr><tr><td>&#39;Style Registry: Multiple Registrations&#39;</td><td>7,208.07 ns</td><td>215.498 ns</td><td>33.348 ns</td><td>2</td><td>0.4044</td><td>-</td><td>5096 B</td>
+</thead><tbody><tr><td>XmlToIrConverterRecursive</td><td>19,805.63 ns</td><td>602.890 ns</td><td>156.569 ns</td><td>3</td><td>6.4392</td><td>2.0752</td><td>81128 B</td>
+</tr><tr><td>XmlToIrConverterLinqStyle</td><td>20,842.31 ns</td><td>6,750.672 ns</td><td>1,753.128 ns</td><td>3</td><td>5.7678</td><td>1.4954</td><td>72616 B</td>
+</tr><tr><td>&#39;Binding Parse: Simple&#39;</td><td>14.98 ns</td><td>0.939 ns</td><td>0.145 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
+</tr><tr><td>&#39;Style Registry: Multiple Registrations&#39;</td><td>7,765.32 ns</td><td>535.707 ns</td><td>139.121 ns</td><td>2</td><td>0.3967</td><td>-</td><td>5096 B</td>
 </tr></tbody></table>
 </body>
 </html>
