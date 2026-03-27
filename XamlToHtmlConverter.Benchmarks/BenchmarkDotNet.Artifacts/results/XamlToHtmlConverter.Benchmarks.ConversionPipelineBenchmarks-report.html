@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.ConversionPipelineBenchmarks-20260325-105144</title>
+<title>XamlToHtmlConverter.Benchmarks.ConversionPipelineBenchmarks-20260327-111033</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,11 +13,11 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.7840)
+BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
 Unknown processor
 .NET SDK=10.0.201
   [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
-  Job-MNXVDQ : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-AWBITN : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=5  WarmupCount=3  
 </code></pre>
@@ -25,10 +25,10 @@ Unknown processor
 <table>
 <thead><tr><th>            Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Rank</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>&#39;Sample XAML Conversion&#39;</td><td>301.6 &mu;s</td><td>58.60 &mu;s</td><td>15.22 &mu;s</td><td>2</td><td>27.3438</td><td>6.8359</td><td>342.6 KB</td>
-</tr><tr><td>&#39;Large XAML Conversion&#39;</td><td>378.8 &mu;s</td><td>24.35 &mu;s</td><td>6.32 &mu;s</td><td>3</td><td>35.1563</td><td>9.7656</td><td>439.31 KB</td>
-</tr><tr><td>&#39;Parsing Phase Only&#39;</td><td>157.6 &mu;s</td><td>13.21 &mu;s</td><td>2.04 &mu;s</td><td>1</td><td>9.2773</td><td>2.9297</td><td>119.26 KB</td>
-</tr><tr><td>&#39;Rendering Phase Only&#39;</td><td>296.4 &mu;s</td><td>57.86 &mu;s</td><td>15.03 &mu;s</td><td>2</td><td>27.3438</td><td>6.8359</td><td>342.6 KB</td>
+</thead><tbody><tr><td>&#39;Sample XAML Conversion&#39;</td><td>288.0 &mu;s</td><td>10.97 &mu;s</td><td>2.85 &mu;s</td><td>2</td><td>24.4141</td><td>4.8828</td><td>308.6 KB</td>
+</tr><tr><td>&#39;Large XAML Conversion&#39;</td><td>328.1 &mu;s</td><td>9.94 &mu;s</td><td>2.58 &mu;s</td><td>3</td><td>30.2734</td><td>7.8125</td><td>374.21 KB</td>
+</tr><tr><td>&#39;Parsing Phase Only&#39;</td><td>176.2 &mu;s</td><td>14.55 &mu;s</td><td>3.78 &mu;s</td><td>1</td><td>9.7656</td><td>2.4414</td><td>121.29 KB</td>
+</tr><tr><td>&#39;Rendering Phase Only&#39;</td><td>290.6 &mu;s</td><td>5.42 &mu;s</td><td>0.84 &mu;s</td><td>2</td><td>24.4141</td><td>4.8828</td><td>308.6 KB</td>
 </tr></tbody></table>
 </body>
 </html>

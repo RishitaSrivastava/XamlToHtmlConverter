@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="XamlToHtmlConverter.Tests/XamlToHtmlConverter.Tests.csproj" Id="31ad8bf8-e2b4-449c-be82-e065c540a7fd" />
   <Project Path="XamlToHtmlConverter/XamlToHtmlConverter.csproj" />
+  <Project Path="XamlToHtmlConverter.Desktop/XamlToHtmlConverter.Desktop.csproj" />
 </Solution>
