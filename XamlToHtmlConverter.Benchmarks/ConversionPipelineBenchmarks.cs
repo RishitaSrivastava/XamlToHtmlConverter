@@ -2,7 +2,6 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using System.Diagnostics;
 using XamlToHtmlConverter.Parsing;
 using XamlToHtmlConverter.Rendering;
 

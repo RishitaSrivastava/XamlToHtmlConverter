@@ -8,7 +8,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 /// <summary>
 /// Renderer for DatePicker elements, mapping to HTML input[type=date].
 /// </summary>
-public class DatePickerRenderer : IControlRenderer
+public class DatePickerRenderer : IAttributeRenderer
 {
     public bool CanHandle(IntermediateRepresentationElement element)
         => element.Type == "DatePicker";

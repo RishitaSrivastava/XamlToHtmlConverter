@@ -8,7 +8,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 /// <summary>
 /// Renderer for PasswordBox elements, mapping to HTML input[type=password].
 /// </summary>
-public class PasswordBoxRenderer : IControlRenderer
+public class PasswordBoxRenderer : IAttributeRenderer
 {
     public bool CanHandle(IntermediateRepresentationElement element)
         => element.Type == "PasswordBox";

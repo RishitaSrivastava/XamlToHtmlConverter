@@ -83,6 +83,19 @@ namespace XamlToHtmlConverter.Rendering
         public string Build(IntermediateRepresentationElement element, LayoutContext context)
         {
             var sb = new StringBuilder();
+
+            // Canvas container needs position:relative so absolute children are anchored to it
+            if (element.Type == "Canvas")
+                sb.Append("position:relative;");
+
+            // Separator: vertical line in a horizontal flex row, horizontal line otherwise
+            if (element.Type == "Separator")
+            {
+                if (context.ParentOrientation?.Equals("Horizontal", StringComparison.OrdinalIgnoreCase) == true)
+                    sb.Append("align-self:stretch;border:none;border-left:1px solid currentColor;height:auto;margin:0 6px;width:0;");
+                else
+                    sb.Append("border:none;border-top:1px solid currentColor;margin:4px 0;width:100%;");
+            }
             v_PropertyEngine.Apply(element, context, sb);
             ApplyAttachedProperties(element, context, sb);
             //ApplyAlignment(element, context, sb);
@@ -124,26 +137,6 @@ namespace XamlToHtmlConverter.Rendering
                                 result[$"data-binding-{key}"] = path;
                 }
             }
-            foreach (var trigger in element.Triggers)
-            {
-                var key = $"data-trigger-{trigger.Property.ToLower()}";
-
-                var sb_setters = new StringBuilder();
-                bool first = true;
-                foreach (var s in trigger.Setters)
-                {
-                    if (!first) sb_setters.Append(";");
-                    sb_setters.Append(s.Key).Append(":").Append(s.Value);
-                    first = false;
-                }
-
-                result[key] = $"{trigger.Value}:{sb_setters}";
-            }
-
-            var multi = TriggerEngine.ExtractMultiTriggers(element);
-
-            foreach (var m in multi)
-                result[m.Key] = m.Value;
 
             return result;
         }
@@ -152,139 +145,7 @@ namespace XamlToHtmlConverter.Rendering
 
         #region Private Methods
 
-        /// <summary>
-        /// Appends width, height, min/max dimensions, background color, margin, and padding
-        /// CSS properties derived from the element's standard XAML properties.
-        /// Returns early with display:none when Visibility is Collapsed.
-        /// </summary>
-        /// <param name="element">The IR element to read properties from.</param>
-        /// <param name="sb">The string builder to append CSS to.</param>
-        private void ApplyStandardProperties(
-    IntermediateRepresentationElement element,
-    LayoutContext context,
-    StringBuilder sb)
-        {
-            if (element.Properties.TryGetValue("Visibility", out var visibility))
-            {
-                switch (visibility)
-                {
-                    case "Collapsed":
-                        sb.Append("display:none;");
-                        return;
-                    case "Hidden":
-                        sb.Append("visibility:hidden;");
-                        break;
-                    case "Visible":
-                        break;
-                }
-            }
-
-            if (element.Properties.TryGetValue("Width", out var width))
-            {
-                var widthLower = width.ToLowerInvariant();
-                if (widthLower == "auto")
-                {
-                    sb.Append("width:auto;");
-                }
-                else if (widthLower == "stretch")
-                {
-                    sb.Append("width:100%;");
-                }
-                else if (int.TryParse(width, out var w))
-                {
-                    // Responsive improvement
-                    sb.Append($"max-width:{w}px;");
-                    sb.Append("width:100%;");
-                }
-            }
-
-            if (element.Properties.TryGetValue("Height", out var height))
-            {
-                var heightLower = height.ToLowerInvariant();
-                if (heightLower == "auto")
-                {
-                    sb.Append("height:auto;");
-                }
-                else if (heightLower == "stretch")
-                {
-                    sb.Append("height:100%;");
-                }
-                else if (int.TryParse(height, out var h))
-                {
-                    // Better vertical behavior
-                    sb.Append($"min-height:{h}px;");
-                }
-            }
-
-            if (element.Properties.TryGetValue("MinWidth", out var minWidth) && int.TryParse(minWidth, out var minW))
-                sb.Append($"min-width:{minW}px;");
-
-            if (element.Properties.TryGetValue("MaxWidth", out var maxWidth) && int.TryParse(maxWidth, out var maxW))
-                sb.Append($"max-width:{maxW}px;");
-
-            if (element.Properties.TryGetValue("MinHeight", out var minHeight) && int.TryParse(minHeight, out var minH))
-                sb.Append($"min-height:{minH}px;");
-
-            if (element.Properties.TryGetValue("MaxHeight", out var maxHeight) && int.TryParse(maxHeight, out var maxH))
-                sb.Append($"max-height:{maxH}px;");
-
-            if (element.Properties.TryGetValue("Background", out var bg))
-                sb.Append($"background-color:{bg};");
-
-            if (element.Properties.TryGetValue("Margin", out var margin))
-                sb.Append($"margin:{ConvertThickness(margin)};");
-
-            if (element.Properties.TryGetValue("Padding", out var padding))
-                sb.Append($"padding:{ConvertThickness(padding)};");
-
-            // Default spacing between controls when XAML did not specify margin
-            if (!element.Properties.ContainsKey("Margin"))
-            {
-                // Do not add margin to layout containers
-                if (element.Type != "Grid" &&
-                    element.Type != "StackPanel" &&
-                    element.Type != "DockPanel" &&
-                    element.Type != "WrapPanel")
-                {
-                    sb.Append("margin:4px;");
-                }
-            }
-
-            // ---- Typography Mapping (WPF ? CSS) ----
-
-            // FontSize
-            if (element.Properties.TryGetValue("FontSize", out var fontSize) &&
-                int.TryParse(fontSize, out var fs))
-            {
-                sb.Append($"font-size:{fs}px;");
-            }
-
-            // FontWeight
-            if (element.Properties.TryGetValue("FontWeight", out var fontWeight))
-            {
-                sb.Append($"font-weight:{fontWeight.ToLower()};");
-            }
-
-            // FontFamily
-            if (element.Properties.TryGetValue("FontFamily", out var fontFamily))
-            {
-                sb.Append($"font-family:{fontFamily};");
-            }
-
-            // Foreground color
-            if (element.Properties.TryGetValue("Foreground", out var foreground))
-            {
-                sb.Append($"color:{foreground};");
-            }
-
-            // WrapPanel item sizing support
-            if (context.ParentLayoutType == "WrapPanel")
-            {
-                sb.Append("width:var(--wrap-item-width,auto);");
-                sb.Append("height:var(--wrap-item-height,auto);");
-            }
-        }
-
+        
         /// <summary>
         /// Appends grid row, column, span, and z-index CSS positioning properties
         /// derived from the element's attached XAML properties.
@@ -320,6 +181,20 @@ namespace XamlToHtmlConverter.Rendering
             {
                 sb.Append($"grid-column:{cc + 1};");
             }
+
+            // Canvas absolute positioning
+            bool hasCanvasAttached = element.AttachedProperties.ContainsKey("Canvas.Left")
+                                  || element.AttachedProperties.ContainsKey("Canvas.Top");
+            if (hasCanvasAttached)
+                sb.Append("position:absolute;");
+
+            if (element.AttachedProperties.TryGetValue("Canvas.Left", out var canvasLeft)
+                && double.TryParse(canvasLeft, out var cl))
+                sb.Append($"left:{cl}px;");
+
+            if (element.AttachedProperties.TryGetValue("Canvas.Top", out var canvasTop)
+                && double.TryParse(canvasTop, out var ct))
+                sb.Append($"top:{ct}px;");
 
             // Z-index
             if (element.AttachedProperties.TryGetValue("Panel.ZIndex", out var zIndex)
@@ -378,93 +253,6 @@ namespace XamlToHtmlConverter.Rendering
         /// <param name="element">The IR element whose alignment properties are evaluated.</param>
         /// <param name="context">The layout context of the parent container.</param>
         /// <param name="sb">The string builder to append CSS to.</param>
-    //    private void ApplyAlignment(
-    //IntermediateRepresentationElement element,
-    //LayoutContext context,
-    //StringBuilder styleBuilder)
-    //    {
-    //        if (context.ParentLayoutType == null)
-    //            return;
-
-    //        element.Properties.TryGetValue("HorizontalAlignment", out var hAlign);
-    //        element.Properties.TryGetValue("VerticalAlignment", out var vAlign);
-
-    //        // GRID ALIGNMENT
-    //        if (context.ParentLayoutType == "Grid")
-    //        {
-    //            var h = ConvertAlignment(hAlign);
-    //            var v = ConvertAlignment(vAlign);
-
-    //            styleBuilder.Append($"justify-self:{h};");
-    //            styleBuilder.Append($"align-self:{v};");
-
-    //            // WPF Stretch support
-    //            if (h == "stretch")
-    //                styleBuilder.Append("width:100%;");
-
-    //            if (v == "stretch")
-    //                styleBuilder.Append("height:100%;");
-
-    //            return;
-    //        }
-
-    //        // STACKPANEL
-    //        if (context.ParentLayoutType == "StackPanel")
-    //        {
-    //            var orientation = context.ParentOrientation ?? "Vertical";
-
-    //            if (orientation == "Vertical")
-    //            {
-    //                // Cross axis = horizontal
-    //                if (!string.IsNullOrWhiteSpace(hAlign))
-    //                {
-    //                    var h = ConvertAlignment(hAlign);
-
-    //                    styleBuilder.Append($"align-self:{h};");
-
-    //                    if (h == "stretch")
-    //                        styleBuilder.Append("width:100%;");
-    //                }
-    //            }
-    //            else
-    //            {
-    //                // Cross axis = vertical
-    //                if (!string.IsNullOrWhiteSpace(vAlign))
-    //                {
-    //                    var v = ConvertAlignment(vAlign);
-
-    //                    styleBuilder.Append($"align-self:{v};");
-
-    //                    if (v == "stretch")
-    //                        styleBuilder.Append("height:100%;");
-    //                }
-    //            }
-
-    //            return;
-    //        }
-
-    //        // WRAPPANEL
-    //        if (context.ParentLayoutType == "WrapPanel")
-    //        {
-    //            if (!string.IsNullOrWhiteSpace(hAlign))
-    //            {
-    //                var h = ConvertAlignment(hAlign);
-    //                styleBuilder.Append($"align-self:{h};");
-
-    //                if (h == "stretch")
-    //                    styleBuilder.Append("width:100%;");
-    //            }
-
-    //            if (!string.IsNullOrWhiteSpace(vAlign))
-    //            {
-    //                var v = ConvertAlignment(vAlign);
-    //                styleBuilder.Append($"align-self:{v};");
-
-    //                if (v == "stretch")
-    //                    styleBuilder.Append("height:100%;");
-    //            }
-    //        }
-    //    }
 
         /// <summary>
         /// Converts a XAML alignment value into its equivalent CSS flexbox/grid self-alignment keyword.

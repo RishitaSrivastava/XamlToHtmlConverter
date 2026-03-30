@@ -31,6 +31,12 @@ namespace XamlToHtmlConverter.Rendering
         private readonly Dictionary<string, string> v_NormalizedStyleCache = new();
 
         /// <summary>
+        /// Holds raw CSS rules (selector + block) registered via <see cref="RegisterRule"/>.
+        /// These are emitted verbatim into the style block without deduplication by class name.
+        /// </summary>
+        private readonly List<string> v_RawRules = new();
+
+        /// <summary>
         /// Holds the counter used to generate unique CSS class names.
         /// </summary>
         private int v_Counter = 1;
@@ -121,6 +127,20 @@ namespace XamlToHtmlConverter.Rendering
         }
 
         /// <summary>
+        /// Registers a raw, fully-formed CSS rule string to be emitted verbatim.
+        /// Duplicate rules (identical string) are silently ignored.
+        /// </summary>
+        /// <param name="cssRule">The complete CSS rule, e.g. "#btn:hover { color:red; }"</param>
+        public void RegisterRule(string cssRule)
+        {
+            if (string.IsNullOrWhiteSpace(cssRule))
+                return;
+
+            if (!v_RawRules.Contains(cssRule))
+                v_RawRules.Add(cssRule);
+        }
+
+        /// <summary>
         /// Generates a complete HTML style block containing all registered CSS class definitions.
         /// </summary>
         /// <returns>A string containing a &lt;style&gt; block with all registered CSS class rules.</returns>
@@ -131,6 +151,9 @@ namespace XamlToHtmlConverter.Rendering
 
             foreach (var kvp in v_ClassToStyle)
                 sb.AppendLine($".{kvp.Key} {{ {kvp.Value} }}");
+
+            foreach (var rule in v_RawRules)
+                sb.AppendLine($"  {rule}");
 
             sb.AppendLine("</style>");
             return sb.ToString();

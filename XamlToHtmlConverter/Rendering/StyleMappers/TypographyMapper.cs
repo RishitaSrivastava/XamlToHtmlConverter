@@ -10,7 +10,10 @@ public class TypographyMapper : IPropertyMapper
         return propertyName == "FontSize" ||
                propertyName == "FontWeight" ||
                propertyName == "FontFamily" ||
-               propertyName == "Foreground";
+               propertyName == "Foreground" ||
+               propertyName == "FontStyle" ||
+               propertyName == "TextDecorations" ||
+               propertyName == "Opacity";
     }
 
     public void Apply(
@@ -38,6 +41,20 @@ public class TypographyMapper : IPropertyMapper
 
             case "Foreground":
                 sb.Append($"color:{value};");
+                break;
+
+            case "FontStyle":
+                sb.Append($"font-style:{value.ToLower()};");
+                break;
+
+            case "TextDecorations":
+                sb.Append($"text-decoration:{value.ToLower()};");
+                break;
+
+            case "Opacity":
+                if (double.TryParse(value, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var opacity))
+                    sb.Append($"opacity:{opacity};");
                 break;
         }
     }

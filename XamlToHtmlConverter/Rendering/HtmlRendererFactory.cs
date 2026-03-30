@@ -55,7 +55,15 @@ namespace XamlToHtmlConverter.Rendering
             new RichTextBoxRenderer(),
             new MediaElementRenderer(),
             new GroupBoxRenderer(),
-            new ExpanderRenderer()
+            new ExpanderRenderer(),
+            new ProgressBarRenderer(),
+            new TreeViewItemRenderer(),
+            new TreeViewRenderer(),
+            new MenuRenderer(),
+            new ToggleButtonRenderer(),
+            new RepeatButtonRenderer(),
+            new DataGridRenderer(),
+            new HyperlinkRenderer()
         };
 
         /// <summary>

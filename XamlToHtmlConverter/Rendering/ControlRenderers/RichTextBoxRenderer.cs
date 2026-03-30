@@ -8,7 +8,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 /// <summary>
 /// Renderer for RichTextBox elements, mapping to HTML div[contenteditable=true].
 /// </summary>
-public class RichTextBoxRenderer : IControlRenderer
+public class RichTextBoxRenderer : IAttributeRenderer, IContentRenderer
 {
     public bool CanHandle(IntermediateRepresentationElement element)
         => element.Type == "RichTextBox";

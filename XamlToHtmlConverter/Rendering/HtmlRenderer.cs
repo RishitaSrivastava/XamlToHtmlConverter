@@ -1,12 +1,11 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
-using System.Collections.Concurrent;
 using System.Text;
 using XamlToHtmlConverter.IntermediateRepresentation;
 using XamlToHtmlConverter.Rendering.Behavior;
 using XamlToHtmlConverter.Rendering.ControlRenderers;
-using XamlToHtmlConverter.Rendering.StyleMappers;
 using XamlToHtmlConverter.Rendering.Templates;
+using XamlToHtmlConverter.Rendering.Triggers;
 
 namespace XamlToHtmlConverter.Rendering
 {
@@ -48,25 +47,29 @@ namespace XamlToHtmlConverter.Rendering
         private readonly IStyleRegistry v_StyleRegistry;
 
         /// <summary>
-        /// Thread-safe cache for layout renderer resolution by element type.
+        /// Caches layout renderer resolution by element type to avoid repeated LINQ queries.
         /// Maps element type name to resolved layout renderer (eliminates LINQ Where/OrderByDescending).
-        /// Uses ConcurrentDictionary to safely handle multi-threaded rendering scenarios.
-        /// Performance optimization: ~90% hit rate for typical XAML documents.
         /// </summary>
-        private readonly ConcurrentDictionary<string, ILayoutRenderer?> v_LayoutRendererCache = new();
+        private readonly Dictionary<string, ILayoutRenderer?> v_LayoutRendererCache = new();
 
         /// <summary>
-        /// Thread-safe cache for HTML tag mapping by element type.
+        /// Caches HTML tag mapping by element type to avoid repeated dictionary lookups.
         /// Maps XAML element type to HTML tag name (div, button, span, etc.).
-        /// Uses ConcurrentDictionary to safely handle multi-threaded rendering scenarios.
         /// </summary>
-        private readonly ConcurrentDictionary<string, string> v_TagMappingCache = new();
+        private readonly Dictionary<string, string> v_TagMappingCache = new();
 
         private readonly ControlRendererRegistry v_ControlRegistry;
 
         private readonly ITemplateEngine v_TemplateEngine;
 
         private readonly BehaviorRegistry v_BehaviorRegistry;
+
+        /// <summary>
+        /// Accumulates CSS rules from triggers across all elements during a single
+        /// <see cref="RenderDocument"/> call. Cleared before each document render.
+        /// </summary>
+        private readonly List<string> v_PendingCssRules = new();
+
         #endregion
 
         private static string GetIndent(int indent)
@@ -119,9 +122,15 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A complete HTML document string.</returns>
         public string RenderDocument(IntermediateRepresentationElement root)
         {
+            // Reset per-document state.
+            v_PendingCssRules.Clear();
 
             var bodyBuilder = new StringBuilder();
             RenderElement(root, bodyBuilder, 0, null, null);
+
+            // Register all trigger-derived CSS rules collected during element rendering.
+            foreach (var rule in v_PendingCssRules)
+                v_StyleRegistry.RegisterRule(rule);
 
             var sb = new StringBuilder();
             sb.AppendLine("<!DOCTYPE html>");
@@ -131,7 +140,6 @@ namespace XamlToHtmlConverter.Rendering
             sb.AppendLine("<title>XAML to HTML Output</title>");
             sb.AppendLine(v_StyleRegistry.GenerateStyleBlock());
             sb.AppendLine(VirtualizationStyleInjector.Build());
-            sb.AppendLine("<script src=\"xaml-runtime.js\"></script>");
             sb.AppendLine("</head>");
             sb.AppendLine("<body>");
             sb.Append(bodyBuilder.ToString());
@@ -163,6 +171,12 @@ namespace XamlToHtmlConverter.Rendering
             var tag = ResolveTagMapping(element.Type);
             var style = BuildStyle(element, parentLayoutType, parentOrientation);
 
+            // CheckBox and RadioButton render as <label><input .../> Text</label>
+            bool isLabelWrapped = element.Type == "CheckBox" || element.Type == "RadioButton";
+            if (isLabelWrapped)
+                sb.Append($"{indentation}<label>");
+
+            sb.Append(isLabelWrapped ? $"<{tag}" : $"{indentation}<{tag}");
             var attributes = new AttributeBuffer();
             var controlRenderer = v_ControlRegistry.Resolve(element);
 
@@ -172,6 +186,12 @@ namespace XamlToHtmlConverter.Rendering
                 attributeRenderer.RenderAttributes(element, attributes);
             }
 
+            // Emit id from x:Name / Name so CSS trigger selectors like #myBtn:hover resolve
+            if (element.Properties.TryGetValue("x:Name", out var xName) && !string.IsNullOrWhiteSpace(xName))
+                attributes.Add("id", xName);
+            else if (element.Properties.TryGetValue("Name", out var nameVal) && !string.IsNullOrWhiteSpace(nameVal))
+                attributes.Add("id", nameVal);
+
             // Emit data-binding-* attributes
             var bindingAttributes = v_StyleBuilder.ExtractBindingAttributes(element);
 
@@ -179,6 +199,15 @@ namespace XamlToHtmlConverter.Rendering
             {
                 attributes.Add(attr.Key, attr.Value);
             }
+
+            // Process all triggers: CSS rules are queued for the style block;
+            // data attributes are emitted on the element; JS runtime flag is tracked.
+            var triggerOutput = TriggerEngine.ProcessAll(element);
+
+            foreach (var triggerAttr in triggerOutput.DataAttributes)
+                attributes.Add(triggerAttr.Key, triggerAttr.Value);
+
+            v_PendingCssRules.AddRange(triggerOutput.CssRules);
 
             // Emit data-event-* attributes
             var behaviors = v_BehaviorRegistry.Extract(element);
@@ -188,6 +217,7 @@ namespace XamlToHtmlConverter.Rendering
                 attributes.Add(behavior.Key, behavior.Value);
             }
 
+
             // Apply CSS class (deduplicated style)
             if (!string.IsNullOrWhiteSpace(style))
             {
@@ -195,71 +225,53 @@ namespace XamlToHtmlConverter.Rendering
                 attributes.Add("class", className);
             }
 
-            // Check for CheckBox/RadioButton with Content property (scoped contentValue declaration)
-            string? contentValue = null;
-            bool isCheckboxWithContent = (tag == "input") &&
-                                        (element.Type == "CheckBox" || element.Type == "RadioButton") &&
-                                        element.Properties.TryGetValue("Content", out contentValue);
-
-            // Self-closing elements (input, img)
-            if (tag == "input" || tag == "img")
+            // Self-closing elements (input, img, hr)
+            if (tag == "input" || tag == "img" || tag == "hr")
             {
-                if (element.Type == "Image" &&
-                    element.Properties.TryGetValue("Source", out var src))
+                if (element.Type == "Image")
                 {
-                    attributes.Add("src", src);
-                }
+                    if (element.Properties.TryGetValue("Source", out var src))
+                        attributes.Add("src", src);
 
-                if (isCheckboxWithContent)
-                {
-                    // Wrap checkbox/radiobutton with label for proper styling and semantics
-                    sb.Append($"{indentation}<label");
-                    
-                    // Apply label styling (flexbox to align checkbox and text)
-                    var labelStyle = "display:flex;align-items:center;gap:8px;";
-                    if (!string.IsNullOrWhiteSpace(style))
-                    {
-                        var className = v_StyleRegistry.Register(labelStyle + style);
-                        sb.Append($" class=\"{className}\"");
-                    }
+                    if (element.Properties.TryGetValue("Name", out var altName))
+                        attributes.Add("alt", altName);
+                    else if (element.Properties.TryGetValue("Tag", out var tagVal))
+                        attributes.Add("alt", tagVal);
                     else
+                        attributes.Add("alt", "");
+
+                    if (element.Properties.TryGetValue("Stretch", out var stretch))
                     {
-                        var className = v_StyleRegistry.Register(labelStyle);
-                        sb.Append($" class=\"{className}\"");
+                        var objectFit = stretch switch
+                        {
+                            "Fill" => "fill",
+                            "Uniform" => "contain",
+                            "UniformToFill" => "cover",
+                            "None" => "none",
+                            _ => "contain"
+                        };
                     }
-                    sb.AppendLine(">");
-                    sb.Append(GetIndent(indent + 2));
-                    sb.Append($"<{tag}");
-                    
-                    // Apply smaller checkbox style (not the 32px form element height)
-                    var checkboxStyle = "width:18px;height:18px;margin:0px 4px;";
-                    var checkboxClassName = v_StyleRegistry.Register(checkboxStyle);
-                    attributes.Add("class", checkboxClassName);
-                    
-                    attributes.WriteTo(sb);
-                    sb.Append(" />");
-                    sb.AppendLine();
-                    sb.Append(GetIndent(indent + 2));
-                    sb.Append(contentValue);
-                    sb.AppendLine();
-                    sb.Append(GetIndent(indent));
-                    sb.AppendLine("</label>");
-                    return;
                 }
 
-                // Normal input/img rendering (without Content property)
-                sb.Append($"{indentation}<{tag}");
                 attributes.WriteTo(sb);
                 sb.Append(" />");
-                sb.AppendLine();
+
+                if (isLabelWrapped)
+                {
+                    if (element.Properties.TryGetValue("Content", out var contentValue))
+                        sb.Append($" {System.Net.WebUtility.HtmlEncode(contentValue)}");
+                    sb.AppendLine("</label>");
+                }
+                else
+                {
+                    sb.AppendLine();
+                }
                 return;
             }
 
-            sb.Append($"{indentation}<{tag}");
-
             attributes.WriteTo(sb);
             sb.Append(">");
-            
+
             // Apply control-specific content rendering (via IContentRenderer)
             if (controlRenderer is IContentRenderer contentRenderer)
             {
@@ -339,12 +351,6 @@ namespace XamlToHtmlConverter.Rendering
             var context = new LayoutContext(parentLayoutType, parentOrientation);
             sb.Append(v_StyleBuilder.Build(element, context));
 
-            // Apply default form element styling (heights, vertical alignment)
-            FormElementMapper.ApplyFormElementStyle(element, sb);
-
-            // Apply default TextBlock styling (margin, line-height) for visibility
-            TextBlockMapper.ApplyTextBlockStyle(element, sb);
-
             return sb.ToString();
         }
         private static string? ResolveElementContent(IntermediateRepresentationElement element)
@@ -364,46 +370,49 @@ namespace XamlToHtmlConverter.Rendering
         /// <summary>
         /// Resolves the HTML tag for a XAML element type using cached lookup.
         /// Caches by element Type to avoid repeated tag mapper queries.
-        /// Thread-safe: Uses ConcurrentDictionary.GetOrAdd for atomic cache operations.
         /// Performance optimization: eliminates repeated mapper lookups.
         /// </summary>
         private string ResolveTagMapping(string elementType)
         {
-            // Thread-safe cache lookup and update with GetOrAdd
-            return v_TagMappingCache.GetOrAdd(elementType, type =>
-            {
-                // Resolve tag from mapper only if not already cached
-                return v_TagMapper.Map(type);
-            });
+            // Cache lookup by type
+            if (v_TagMappingCache.TryGetValue(elementType, out var cached))
+                return cached;
+
+            // Resolve tag from mapper
+            var tag = v_TagMapper.Map(elementType);
+
+            // Cache the result
+            v_TagMappingCache[elementType] = tag;
+            return tag;
         }
 
         /// <summary>
         /// Resolves the appropriate layout renderer for an element type using cached lookup.
         /// Caches by element Type to avoid repeated LINQ queries.
-        /// Thread-safe: Uses ConcurrentDictionary.GetOrAdd for atomic cache operations.
         /// Performance optimization: eliminates Where/OrderByDescending enumerable allocations.
         /// </summary>
         private ILayoutRenderer? ResolveLayoutRenderer(IntermediateRepresentationElement element)
         {
-            // Thread-safe cache lookup and update with GetOrAdd
-            return v_LayoutRendererCache.GetOrAdd(element.Type, type =>
+            // Cache lookup by type
+            if (v_LayoutRendererCache.TryGetValue(element.Type, out var cached))
+                return cached;
+
+            // No LINQ: Manual iteration with priority tracking
+            ILayoutRenderer? result = null;
+            int maxPriority = -1;
+
+            foreach (var renderer in v_LayoutRenderers)
             {
-                // No LINQ: Manual iteration with priority tracking
-                ILayoutRenderer? result = null;
-                int maxPriority = -1;
-
-                foreach (var renderer in v_LayoutRenderers)
+                if (renderer.CanHandle(element) && renderer.Priority > maxPriority)
                 {
-                    if (renderer.CanHandle(element) && renderer.Priority > maxPriority)
-                    {
-                        result = renderer;
-                        maxPriority = renderer.Priority;
-                    }
+                    result = renderer;
+                    maxPriority = renderer.Priority;
                 }
+            }
 
-                // Return the result (even if null, to avoid re-checking)
-                return result;
-            });
+            // Cache the result (even if null, to avoid re-checking)
+            v_LayoutRendererCache[element.Type] = result;
+            return result;
         }
 
         internal void RenderChild(

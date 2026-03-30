@@ -59,7 +59,6 @@ public static class RegexSafetyPatterns
         catch (RegexMatchTimeoutException)
         {
             // Log the timeout event and handle gracefully
-            // In production, consider logging: LogWarning("Regex timeout on pattern", new { pattern, inputLength = input.Length });
             return false;
         }
     }

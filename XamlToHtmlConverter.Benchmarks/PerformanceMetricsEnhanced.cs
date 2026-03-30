@@ -1,6 +1,5 @@
 // Copyright (c) 2026 by Medtronic, plc.  All Rights Reserved
 
-using System.Diagnostics;
 using System.Text;
 
 namespace XamlToHtmlConverter.Benchmarks;

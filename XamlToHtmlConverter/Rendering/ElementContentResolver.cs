@@ -68,6 +68,10 @@ public static class ElementContentResolver
         if (element.Properties.TryGetValue("Content", out var content))
             return content;
 
+        // Priority 5: "Header" property (MenuItem, TreeViewItem — rendered as <li> text)
+        if (element.Properties.TryGetValue("Header", out var header))
+            return header;
+
         // No content found
         return null;
     }

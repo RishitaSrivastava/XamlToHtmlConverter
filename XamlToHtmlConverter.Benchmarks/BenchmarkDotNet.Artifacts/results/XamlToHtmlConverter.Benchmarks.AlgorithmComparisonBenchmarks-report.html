@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.AlgorithmComparisonBenchmarks-20260327-110916</title>
+<title>XamlToHtmlConverter.Benchmarks.AlgorithmComparisonBenchmarks-20260327-142755</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,22 +13,22 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
+BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26100.7840)
 Unknown processor
-.NET SDK=10.0.201
-  [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
-  Job-AWBITN : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+.NET SDK=10.0.102
+  [Host]     : .NET 8.0.23 (8.0.2325.60607), X64 RyuJIT AVX2
+  Job-VCVTSE : .NET 8.0.23 (8.0.2325.60607), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=5  WarmupCount=3  
 </code></pre>
 
 <table>
-<thead><tr><th>                            Method</th><th>  Mean</th><th> Error</th><th>StdDev</th><th>Rank</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
+<thead><tr><th>                            Method</th><th>  Mean</th><th>Error</th><th>StdDev</th><th>Rank</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>XmlToIrConverterRecursive</td><td>19,805.63 ns</td><td>602.890 ns</td><td>156.569 ns</td><td>3</td><td>6.4392</td><td>2.0752</td><td>81128 B</td>
-</tr><tr><td>XmlToIrConverterLinqStyle</td><td>20,842.31 ns</td><td>6,750.672 ns</td><td>1,753.128 ns</td><td>3</td><td>5.7678</td><td>1.4954</td><td>72616 B</td>
-</tr><tr><td>&#39;Binding Parse: Simple&#39;</td><td>14.98 ns</td><td>0.939 ns</td><td>0.145 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
-</tr><tr><td>&#39;Style Registry: Multiple Registrations&#39;</td><td>7,765.32 ns</td><td>535.707 ns</td><td>139.121 ns</td><td>2</td><td>0.3967</td><td>-</td><td>5096 B</td>
+</thead><tbody><tr><td>XmlToIrConverterRecursive</td><td>19,191.77 ns</td><td>688.644 ns</td><td>106.568 ns</td><td>4</td><td>6.1951</td><td>1.8616</td><td>81128 B</td>
+</tr><tr><td>XmlToIrConverterLinqStyle</td><td>16,854.85 ns</td><td>557.662 ns</td><td>144.823 ns</td><td>3</td><td>5.5542</td><td>1.5259</td><td>72616 B</td>
+</tr><tr><td>&#39;Binding Parse: Simple&#39;</td><td>15.89 ns</td><td>1.913 ns</td><td>0.296 ns</td><td>1</td><td>0.0067</td><td>-</td><td>88 B</td>
+</tr><tr><td>&#39;Style Registry: Multiple Registrations&#39;</td><td>7,469.21 ns</td><td>585.891 ns</td><td>90.667 ns</td><td>2</td><td>0.3815</td><td>-</td><td>5096 B</td>
 </tr></tbody></table>
 </body>
 </html>
