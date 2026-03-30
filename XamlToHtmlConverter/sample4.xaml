@@ -1,0 +1,135 @@
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Border BorderBrush="DarkGray"
+            BorderThickness="2"
+            Padding="10"
+            Width="1000"
+            Height="700"
+            Background="#FFFFFF">
+
+        <DockPanel>
+
+            <!-- HEADER -->
+            <TextBlock DockPanel.Dock="Top"
+                       Text="Application Settings"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Margin="10"/>
+
+            <!-- LEFT TREE MENU -->
+            <TreeView DockPanel.Dock="Left"
+                      Width="220"
+                      Margin="5">
+
+                <TreeViewItem Header="General">
+                    <TreeViewItem Header="Appearance"/>
+                    <TreeViewItem Header="Language"/>
+                </TreeViewItem>
+
+                <TreeViewItem Header="Account">
+                    <TreeViewItem Header="Profile"/>
+                    <TreeViewItem Header="Security"/>
+                </TreeViewItem>
+
+                <TreeViewItem Header="System">
+                    <TreeViewItem Header="Updates"/>
+                    <TreeViewItem Header="Storage"/>
+                </TreeViewItem>
+
+            </TreeView>
+
+            <!-- MAIN CONTENT -->
+            <TabControl Margin="10">
+
+                <!-- TAB 1 -->
+                <TabItem Header="General">
+
+                    <StackPanel Margin="10">
+
+                        <GroupBox Header="Appearance" Margin="5">
+                            <StackPanel>
+                                <CheckBox Content="Dark Mode" Margin="5"/>
+                                <CheckBox Content="Use Animations" Margin="5"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Language" Margin="5">
+                            <StackPanel>
+                                <ComboBox Width="150" Margin="5">
+                                    <ComboBoxItem Content="English"/>
+                                    <ComboBoxItem Content="Hindi"/>
+                                    <ComboBoxItem Content="French"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+
+                </TabItem>
+
+                <!-- TAB 2 -->
+                <TabItem Header="Account">
+
+                    <Grid Margin="10">
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Username:" Grid.Row="0" Margin="5"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Margin="5"/>
+
+                        <TextBlock Text="Password:" Grid.Row="1" Margin="5"/>
+                        <PasswordBox Grid.Row="1" Grid.Column="1" Margin="5"/>
+
+                        <Button Content="Update"
+                                Grid.Row="2"
+                                Grid.ColumnSpan="2"
+                                Margin="10"
+                                Width="120"/>
+
+                    </Grid>
+
+                </TabItem>
+
+                <!-- TAB 3 -->
+                <TabItem Header="System">
+
+                    <StackPanel Margin="10">
+
+                        <GroupBox Header="Updates" Margin="5">
+                            <StackPanel>
+                                <CheckBox Content="Auto Update" Margin="5"/>
+                                <Button Content="Check for Updates" Margin="5"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Storage" Margin="5">
+                            <StackPanel>
+                                <TextBlock Text="Disk Usage" Margin="5"/>
+                                <ProgressBar Value="40"
+                                             Maximum="100"
+                                             Height="20"
+                                             Margin="5"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+
+                </TabItem>
+
+            </TabControl>
+
+        </DockPanel>
+
+    </Border>
+
+</Grid>

@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.StressBenchmarks-20260327-142957</title>
+<title>XamlToHtmlConverter.Benchmarks.StressBenchmarks-20260330-120200</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -13,11 +13,11 @@
 </head>
 <body>
 <pre><code>
-BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26100.7840)
+BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
 Unknown processor
-.NET SDK=10.0.102
-  [Host]     : .NET 8.0.23 (8.0.2325.60607), X64 RyuJIT AVX2
-  Job-BBHMCM : .NET 8.0.23 (8.0.2325.60607), X64 RyuJIT AVX2
+.NET SDK=10.0.201
+  [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-HTAAMM : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=3  WarmupCount=2  
 </code></pre>
@@ -25,9 +25,9 @@ Unknown processor
 <table>
 <thead><tr><th>                        Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>&#39;High Element Count (500+ elements)&#39;</td><td>299.90 &mu;s</td><td>171.70 &mu;s</td><td>9.411 &mu;s</td><td>79.1016</td><td>33.2031</td><td>1015.08 KB</td>
-</tr><tr><td>&#39;High Style Diversity (100+ unique)&#39;</td><td>90.94 &mu;s</td><td>26.05 &mu;s</td><td>1.428 &mu;s</td><td>22.7051</td><td>3.6621</td><td>290.38 KB</td>
-</tr><tr><td>&#39;Repeated Binding Parse (1000x)&#39;</td><td>152.60 &mu;s</td><td>78.38 &mu;s</td><td>4.296 &mu;s</td><td>24.4141</td><td>-</td><td>312.5 KB</td>
+</thead><tbody><tr><td>&#39;High Element Count (500+ elements)&#39;</td><td>289.19 &mu;s</td><td>292.67 &mu;s</td><td>16.042 &mu;s</td><td>82.5195</td><td>35.1563</td><td>1015.12 KB</td>
+</tr><tr><td>&#39;High Style Diversity (100+ unique)&#39;</td><td>92.38 &mu;s</td><td>58.78 &mu;s</td><td>3.222 &mu;s</td><td>23.6816</td><td>4.3945</td><td>290.41 KB</td>
+</tr><tr><td>&#39;Repeated Binding Parse (1000x)&#39;</td><td>153.15 &mu;s</td><td>181.45 &mu;s</td><td>9.946 &mu;s</td><td>25.3906</td><td>-</td><td>312.5 KB</td>
 </tr></tbody></table>
 </body>
 </html>
