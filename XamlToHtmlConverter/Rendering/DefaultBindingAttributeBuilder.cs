@@ -92,7 +92,8 @@ public class DefaultBindingAttributeBuilder : IBindingAttributeBuilder
     /// </summary>
     private static string ConvertCamelCaseToKebabCase(string input)
     {
-        var result = new System.Text.StringBuilder();
+        // Capacity optimized for binding attribute construction (typically 100-300 chars)
+        var result = new System.Text.StringBuilder(255);
         for (int i = 0; i < input.Length; i++)
         {
             var ch = input[i];

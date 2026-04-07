@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.StressBenchmarks-20260330-120200</title>
+<title>XamlToHtmlConverter.Benchmarks.StressBenchmarks-20260407-151115</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -17,7 +17,7 @@ BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
 Unknown processor
 .NET SDK=10.0.201
   [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
-  Job-HTAAMM : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-OKJBPZ : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=3  WarmupCount=2  
 </code></pre>
@@ -25,9 +25,9 @@ Unknown processor
 <table>
 <thead><tr><th>                        Method</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>&#39;High Element Count (500+ elements)&#39;</td><td>289.19 &mu;s</td><td>292.67 &mu;s</td><td>16.042 &mu;s</td><td>82.5195</td><td>35.1563</td><td>1015.12 KB</td>
-</tr><tr><td>&#39;High Style Diversity (100+ unique)&#39;</td><td>92.38 &mu;s</td><td>58.78 &mu;s</td><td>3.222 &mu;s</td><td>23.6816</td><td>4.3945</td><td>290.41 KB</td>
-</tr><tr><td>&#39;Repeated Binding Parse (1000x)&#39;</td><td>153.15 &mu;s</td><td>181.45 &mu;s</td><td>9.946 &mu;s</td><td>25.3906</td><td>-</td><td>312.5 KB</td>
+</thead><tbody><tr><td>&#39;High Element Count (500+ elements)&#39;</td><td>347.8 &mu;s</td><td>316.21 &mu;s</td><td>17.33 &mu;s</td><td>82.5195</td><td>35.1563</td><td>1015.12 KB</td>
+</tr><tr><td>&#39;High Style Diversity (100+ unique)&#39;</td><td>103.6 &mu;s</td><td>9.08 &mu;s</td><td>0.50 &mu;s</td><td>23.6816</td><td>4.3945</td><td>290.41 KB</td>
+</tr><tr><td>&#39;Repeated Binding Parse (1000x)&#39;</td><td>178.8 &mu;s</td><td>102.29 &mu;s</td><td>5.61 &mu;s</td><td>25.3906</td><td>-</td><td>312.5 KB</td>
 </tr></tbody></table>
 </body>
 </html>

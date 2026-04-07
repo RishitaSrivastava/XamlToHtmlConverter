@@ -146,7 +146,8 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A string containing a &lt;style&gt; block with all registered CSS class rules.</returns>
         public string GenerateStyleBlock()
         {
-            var sb = new StringBuilder();
+            // Capacity optimized for CSS style block with multiple rules
+            var sb = new StringBuilder(1023);
             sb.AppendLine("<style>");
 
             foreach (var kvp in v_ClassToStyle)

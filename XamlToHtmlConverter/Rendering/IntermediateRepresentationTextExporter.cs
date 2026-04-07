@@ -22,7 +22,8 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A formatted string representing the IR tree structure.</returns>
         public static string Export(IntermediateRepresentationElement root)
         {
-            var sb = new StringBuilder();
+            // Capacity optimized for full IR tree export (medium-large documents)
+            var sb = new StringBuilder(1023);
             sb.AppendLine("═══════════════════════════════════════════════════════════");
             sb.AppendLine("                   IR TREE STRUCTURE                        ");
             sb.AppendLine("═══════════════════════════════════════════════════════════");

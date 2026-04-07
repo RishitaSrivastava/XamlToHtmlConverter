@@ -125,14 +125,16 @@ namespace XamlToHtmlConverter.Rendering
             // Reset per-document state.
             v_PendingCssRules.Clear();
 
-            var bodyBuilder = new StringBuilder();
+            // Capacity optimized for typical HTML body content (1-10KB)
+            var bodyBuilder = new StringBuilder(2047);
             RenderElement(root, bodyBuilder, 0, null, null);
 
             // Register all trigger-derived CSS rules collected during element rendering.
             foreach (var rule in v_PendingCssRules)
                 v_StyleRegistry.RegisterRule(rule);
 
-            var sb = new StringBuilder();
+            // Capacity optimized for complete HTML document (DOCTYPE + head + body + styles)
+            var sb = new StringBuilder(4095);
             sb.AppendLine("<!DOCTYPE html>");
             sb.AppendLine("<html>");
             sb.AppendLine("<head>");
@@ -340,7 +342,8 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A combined CSS style string for the element.</returns>
         private string BuildStyle(IntermediateRepresentationElement element, string? parentLayoutType, string? parentOrientation)
         {
-            var sb = new StringBuilder();
+            // Capacity optimized for CSS style properties (typically 100-500 chars)
+            var sb = new StringBuilder(509);
 
             // Apply layout container behavior (Grid, StackPanel, DockPanel, etc.)
             var renderer = ResolveLayoutRenderer(element);

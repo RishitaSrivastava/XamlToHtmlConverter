@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
+using System.Xml.Linq;
 using Microsoft.Win32;
 using Microsoft.Web.WebView2.Wpf;
 using XamlToHtmlConverter.Parsing;
@@ -136,6 +138,7 @@ public partial class MainWindow : Window
             File.WriteAllText(tempXamlPath, XamlEditor.Text);
 
             // Load and convert
+            // Load XAML using the parser
             var loader = new XamlLoader();
             var document = loader.Load(tempXamlPath);
 
@@ -189,17 +192,17 @@ public partial class MainWindow : Window
     {
         try
         {
-            // Parse XAML string and create UIElement
-            using (var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xamlString)))
+            // Prepare XAML for preview by replacing Window/Page root with a safe container
+            var xamlToRender = PrepareXamlForPreview(xamlString);
+
+            using (var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xamlToRender)))
             {
                 var xamlElement = XamlReader.Load(memoryStream);
                 
                 if (xamlElement != null)
                 {
-                    // Clear previous content
                     XamlPreviewHost.Child = null;
 
-                    // Try to render as UIElement
                     if (xamlElement is UIElement uiElement)
                     {
                         XamlPreviewHost.Child = new Border
@@ -223,6 +226,53 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             DisplayXamlPreviewError($"Error rendering XAML:\n{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Prepares XAML for live preview by replacing Window/Page/UserControl root elements
+    /// with a ScrollViewer so XamlReader.Load can parse it without a host window.
+    /// </summary>
+    private static string PrepareXamlForPreview(string xamlString)
+    {
+        try
+        {
+            var doc = XDocument.Parse(xamlString);
+            var root = doc.Root;
+            if (root == null) return xamlString;
+
+            var rootName = root.Name.LocalName;
+
+            if (rootName is "Window" or "Page" or "UserControl")
+            {
+                // Preserve all namespace declarations from the root element
+                var nsDeclarations = string.Join(" ",
+                    root.Attributes()
+                        .Where(a => a.IsNamespaceDeclaration || a.Name.LocalName == "xmlns")
+                        .Select(a => $"{a.Name}=\"{a.Value}\""));
+
+                // Get all child elements as inner XML
+                var innerXml = string.Join(Environment.NewLine, root.Elements().Select(e => e.ToString()));
+
+                if (string.IsNullOrWhiteSpace(innerXml))
+                    return xamlString;
+
+                // Wrap children in a ScrollViewer > StackPanel for safe rendering
+                return $@"<ScrollViewer {nsDeclarations}
+                    VerticalScrollBarVisibility=""Auto""
+                    HorizontalScrollBarVisibility=""Auto"">
+                    <StackPanel>
+                        {innerXml}
+                    </StackPanel>
+                </ScrollViewer>";
+            }
+
+            return xamlString;
+        }
+        catch
+        {
+            // If XML parsing fails, return original so XamlReader reports the real error
+            return xamlString;
         }
     }
 

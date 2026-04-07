@@ -9,6 +9,7 @@ namespace XamlToHtmlConverter.Parsing.PropertyElements;
 /// Coordinates a collection of property element handlers to process
 /// complex XAML property elements (e.g., Grid.RowDefinitions, Control.Template).
 /// Routes XML elements to the appropriate handler based on element name matching.
+/// Uses caching to convert O(n) handler lookups into O(1) for repeated element names.
 /// </summary>
 public class PropertyElementHandlerEngine
 {
@@ -18,6 +19,13 @@ public class PropertyElementHandlerEngine
     /// Holds the collection of registered property element handlers.
     /// </summary>
     private readonly List<IPropertyElementHandler> handlers;
+
+    /// <summary>
+    /// Cache mapping element names to their matching handler (or null if no match found).
+    /// Significantly accelerates repeated lookups for common element names.
+    /// Lazy-initialized on first access to minimize startup overhead.
+    /// </summary>
+    private Dictionary<string, IPropertyElementHandler?>? handlerCache;
 
     #endregion
 
@@ -40,6 +48,7 @@ public class PropertyElementHandlerEngine
     /// <summary>
     /// Attempts to find and invoke a handler for the specified XML element.
     /// If a matching handler is found, it processes the element and returns true.
+    /// Results are cached to optimize repeated element name lookups.
     /// </summary>
     /// <param name="element">The XML element to handle.</param>
     /// <param name="ir">The target IR element to populate.</param>
@@ -55,7 +64,32 @@ public class PropertyElementHandlerEngine
     {
         var name = element.Name.LocalName;
 
-        var handler = handlers.FirstOrDefault(h => h.CanHandle(name));
+        // Initialize cache on first access (lazy initialization)
+        handlerCache ??= new Dictionary<string, IPropertyElementHandler?>(StringComparer.Ordinal);
+
+        // Check cache first for O(1) lookup on repeated element names
+        if (handlerCache.TryGetValue(name, out var cachedHandler))
+        {
+            if (cachedHandler == null)
+                return false;
+
+            cachedHandler.Handle(element, ir, convert);
+            return true;
+        }
+
+        // Cache miss: find matching handler and cache result
+        IPropertyElementHandler? handler = null;
+        foreach (var h in handlers)
+        {
+            if (h.CanHandle(name))
+            {
+                handler = h;
+                break;
+            }
+        }
+
+        // Cache the result (including null for no match) to avoid re-scanning
+        handlerCache[name] = handler;
 
         if (handler == null)
             return false;

@@ -82,7 +82,8 @@ public sealed class EventTriggerHandler : ITriggerHandler
 
     private static string SerializeProperties(Dictionary<string, string> props)
     {
-        var sb = new StringBuilder();
+        // Capacity optimized for property serialization (small, ~50-100 chars)
+        var sb = new StringBuilder(127);
         bool first = true;
 
         foreach (var p in props)
