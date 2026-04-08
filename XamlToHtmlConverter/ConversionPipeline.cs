@@ -83,6 +83,9 @@ public class ConversionPipeline
         var irOutputPath = Path.Combine(outputDirectory, "Ir.xml");
         v_OutputWriter.WriteXmlDocument(irDoc, irOutputPath);
 
+        var irTextOutputPath = Path.Combine(outputDirectory, "Ir.txt");
+        IntermediateRepresentationTextExporter.SaveToFile(ir, irTextOutputPath);
+
         var htmlOutputPath = Path.Combine(outputDirectory, "output.html");
         v_OutputWriter.WriteHtmlContent(html, htmlOutputPath);
         writeWatch.Stop();

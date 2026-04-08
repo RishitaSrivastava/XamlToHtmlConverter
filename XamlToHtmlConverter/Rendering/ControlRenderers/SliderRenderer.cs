@@ -8,7 +8,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 /// <summary>
 /// Renderer for Slider elements, mapping to HTML input[type=range].
 /// </summary>
-public class SliderRenderer : IControlRenderer
+public class SliderRenderer : IAttributeRenderer
 {
     public bool CanHandle(IntermediateRepresentationElement element)
         => element.Type == "Slider";

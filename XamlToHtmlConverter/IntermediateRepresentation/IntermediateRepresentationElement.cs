@@ -76,8 +76,26 @@ public class IntermediateRepresentationElement
 
     public List<IntermediateRepresentationTrigger> Triggers { get; } = new();
 
-    public List<IntermediateRepresentationMultiTrigger> MultiTriggers { get; }
-    = new();
+    public List<IntermediateRepresentationMultiTrigger> MultiTriggers { get; } = new();
+
+    /// <summary>
+    /// Gets the collection of data-bound triggers. Each trigger fires when a binding
+    /// expression evaluates to a specified value (equivalent to XAML DataTrigger).
+    /// </summary>
+    public List<IntermediateRepresentationDataTrigger> DataTriggers { get; } = new();
+
+    /// <summary>
+    /// Gets the collection of multi-condition data-bound triggers. All binding conditions
+    /// must be satisfied simultaneously for the trigger to fire (equivalent to XAML MultiDataTrigger).
+    /// </summary>
+    public List<IntermediateRepresentationMultiDataTrigger> MultiDataTriggers { get; } = new();
+
+    /// <summary>
+    /// Gets the collection of event-based triggers. Each trigger fires when a specified
+    /// routed event is raised on the element (equivalent to XAML EventTrigger).
+    /// </summary>
+    public List<IntermediateRepresentationEventTrigger> EventTriggers { get; } = new();
+
     #endregion
 
     #region Constructors

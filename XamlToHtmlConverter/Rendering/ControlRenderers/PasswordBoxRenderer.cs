@@ -8,7 +8,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 /// <summary>
 /// Renderer for PasswordBox elements, mapping to HTML input[type=password].
 /// </summary>
-public class PasswordBoxRenderer : IControlRenderer
+public class PasswordBoxRenderer : IAttributeRenderer
 {
     public bool CanHandle(IntermediateRepresentationElement element)
         => element.Type == "PasswordBox";
@@ -37,8 +37,7 @@ public class PasswordBoxRenderer : IControlRenderer
             attributes.Add("readonly", "");
 
         // Handle bindings if any
-        if (element.Bindings.TryGetValue("Password", out var binding) && 
-            !string.IsNullOrEmpty(binding?.Path))
-            attributes.Add("data-binding-password", binding.Path!);
+        if (element.Bindings.TryGetValue("Password", out var binding) && !string.IsNullOrEmpty(binding.Path))
+            attributes.Add("data-binding-password", binding.Path);
     }
 }

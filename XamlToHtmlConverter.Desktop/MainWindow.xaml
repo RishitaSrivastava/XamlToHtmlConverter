@@ -1,0 +1,153 @@
+<Window x:Class="XamlToHtmlConverter.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:XamlToHtmlConverter.Desktop"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="XAML to HTML Converter - Visual Split View" Height="900" Width="1600"
+        WindowStartupLocation="CenterScreen">
+    <Grid Background="#F0F0F0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- LEFT PANEL: XAML EDITOR & VISUAL PREVIEW -->
+        <Grid Grid.Column="0" Background="White" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Toolbar -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10" Background="#F5F5F5">
+                <Button Name="OpenFileButton" Click="OpenFile_Click" Width="120" Margin="5" 
+                        Background="#0078D4" Foreground="White" Content="Open File"/>
+                <Button Name="LoadSampleButton" Click="LoadSample_Click" Width="120" Margin="5"
+                        Background="#107C10" Foreground="White" Content="Load Sample"/>
+                <Button Name="ConvertButton" Click="Convert_Click" Width="100" Margin="5"
+                        Background="#FF7630" Foreground="White" Content="Convert"/>
+            </StackPanel>
+
+            <!-- File status -->
+            <TextBlock Grid.Row="1" Name="FileStatusText" Text="No file loaded" 
+                       Foreground="#666" Margin="10,0,10,5" FontSize="11"/>
+
+            <!-- XAML Editor -->
+            <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Margin="10,0,10,10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="XAML Source Code" FontSize="11" FontWeight="Bold" 
+                               Margin="8,5" Foreground="#333"/>
+                    <TextBox Name="XamlEditor" Grid.Row="1" 
+                             TextWrapping="Wrap" AcceptsReturn="True" 
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas" FontSize="10"
+                             Padding="10" Text="&lt;Window/&gt;"/>
+                </Grid>
+            </Border>
+
+            <!-- Splitter between editor and preview -->
+            <GridSplitter Grid.Row="3" Height="4" Background="#DDD" HorizontalAlignment="Stretch"/>
+
+            <!-- XAML Visual Preview -->
+            <Border Grid.Row="4" BorderBrush="#DDD" BorderThickness="1" Margin="10,10,10,10" Background="White">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="XAML Visual Preview" FontSize="11" FontWeight="Bold" 
+                               Margin="8,5" Foreground="#333"/>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <Border Name="XamlPreviewHost" Background="#F9F9F9" Padding="20">
+                            <TextBlock Text="Load XAML and click Convert to see preview" 
+                                     Foreground="#999" FontSize="12" TextAlignment="Center"/>
+                        </Border>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Status bar -->
+            <TextBlock Grid.Row="5" Name="ConversionStatusText" Text="Ready"
+                       Foreground="#333" Margin="10,5" FontSize="10"/>
+        </Grid>
+
+        <!-- SPLITTER -->
+        <GridSplitter Grid.Column="1" Width="5" Background="#DDD" HorizontalAlignment="Stretch" 
+                      Cursor="SizeWE"/>
+
+        <!-- RIGHT PANEL: HTML SOURCE & WEBVIEW -->
+        <Grid Grid.Column="2" Background="White" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Toolbar -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10" Background="#F5F5F5">
+                <Button Name="CopyHtmlButton" Click="CopyHtml_Click" Width="110" Margin="5"
+                        Background="#0078D4" Foreground="White" Content="Copy HTML"/>
+                <Button Name="SaveHtmlButton" Click="SaveHtml_Click" Width="110" Margin="5"
+                        Background="#107C10" Foreground="White" Content="Save HTML"/>
+            </StackPanel>
+
+            <!-- HTML source info -->
+            <TextBlock Grid.Row="1" Name="HtmlStatusText" Text="Convert XAML to see HTML output"
+                       Foreground="#666" Margin="10,0,10,5" FontSize="11"/>
+
+            <!-- HTML Source Code -->
+            <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Margin="10,0,10,10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="HTML Source Code" FontSize="11" FontWeight="Bold"
+                               Margin="8,5" Foreground="#333"/>
+                    <TextBox Name="HtmlOutput" Grid.Row="1" 
+                             TextWrapping="Wrap" AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas" FontSize="10"
+                             Padding="10" IsReadOnly="True" Background="#F9F9F9"/>
+                </Grid>
+            </Border>
+
+            <!-- Splitter between HTML source and WebView -->
+            <GridSplitter Grid.Row="3" Height="4" Background="#DDD" HorizontalAlignment="Stretch"/>
+
+            <!-- HTML WebView Preview -->
+            <Border Grid.Row="4" BorderBrush="#DDD" BorderThickness="1" Margin="10,10,10,10" Background="White">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="HTML Visual Preview" FontSize="11" FontWeight="Bold" 
+                               Margin="8,5" Foreground="#333"/>
+                    <wv2:WebView2 Name="HtmlWebView" Grid.Row="1"/>
+                </Grid>
+            </Border>
+
+            <!-- Performance metrics -->
+            <TextBlock Grid.Row="5" Name="MetricsText" Text="Performance: --"
+                       Foreground="#333" Margin="10,5" FontSize="10"/>
+        </Grid>
+    </Grid>
+</Window>

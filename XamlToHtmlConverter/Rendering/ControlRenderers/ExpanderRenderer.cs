@@ -8,7 +8,7 @@ namespace XamlToHtmlConverter.Rendering.ControlRenderers;
 /// <summary>
 /// Renderer for Expander elements, mapping to HTML details with injected summary.
 /// </summary>
-public class ExpanderRenderer : IControlRenderer
+public class ExpanderRenderer : IContentRenderer, IAttributeRenderer
 {
     public bool CanHandle(IntermediateRepresentationElement element)
         => element.Type == "Expander";
@@ -19,18 +19,18 @@ public class ExpanderRenderer : IControlRenderer
         int indent,
         Action<IntermediateRepresentationElement, StringBuilder, int> renderChild)
     {
-        // Render the summary (Header property becomes the summary text)
-        if (element.Properties.TryGetValue("Header", out var header))
-        {
-            var summaryIndent = new string(' ', indent + 2);
-            sb.AppendLine($"{summaryIndent}<summary>{System.Net.WebUtility.HtmlEncode(header)}</summary>");
-        }
+        var childIndent = new string(' ', indent + 2);
 
-        // Render child content
+        // Newline after <details> opening tag, then <summary> on its own line
+        sb.AppendLine();
+        if (element.Properties.TryGetValue("Header", out var header))
+            sb.AppendLine($"{childIndent}<summary>{System.Net.WebUtility.HtmlEncode(header)}</summary>");
+
         foreach (var child in element.Children)
-        {
             renderChild(child, sb, indent + 2);
-        }
+
+        // Position </details> at the same indent level as <details>
+        sb.Append(new string(' ', indent));
     }
 
     public void RenderAttributes(IntermediateRepresentationElement element, AttributeBuffer attributes)

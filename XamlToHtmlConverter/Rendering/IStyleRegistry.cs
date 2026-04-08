@@ -20,6 +20,15 @@ public interface IStyleRegistry
     string Register(string? cssStyle);
 
     /// <summary>
+    /// Registers a raw, fully-formed CSS rule string (selector + declaration block)
+    /// that will be emitted verbatim into the generated style block.
+    /// Used to inject trigger-derived CSS rules such as pseudo-class selectors.
+    /// Example: "#myButton:hover { background-color: blue; }"
+    /// </summary>
+    /// <param name="cssRule">The complete CSS rule to register.</param>
+    void RegisterRule(string cssRule);
+
+    /// <summary>
     /// Generates a complete HTML style block containing all registered CSS class definitions.
     /// Called once at the beginning of HTML rendering.
     /// </summary>
