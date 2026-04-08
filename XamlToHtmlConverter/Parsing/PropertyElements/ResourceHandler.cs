@@ -22,9 +22,16 @@ public class ResourceHandler : IPropertyElementHandler
 
             var style = new IntermediateRepresentationStyle();
 
-            // x:Key
-            var keyAttr = resource.Attributes()
-                .FirstOrDefault(a => a.Name.LocalName == "Key");
+            // x:Key - Find attribute without LINQ allocation
+            XAttribute? keyAttr = null;
+            foreach (var attr in resource.Attributes())
+            {
+                if (attr.Name.LocalName == "Key")
+                {
+                    keyAttr = attr;
+                    break;
+                }
+            }
 
             if (keyAttr != null)
                 style.Key = keyAttr.Value;
@@ -62,12 +69,19 @@ public class ResourceHandler : IPropertyElementHandler
 
     private string? ExtractStaticResourceKey(string value)
     {
-        if (!value.StartsWith("{StaticResource"))
+        const string startMarker = "{StaticResource";
+        
+        if (!value.StartsWith(startMarker))
             return null;
 
-        return value
-            .Replace("{StaticResource", "")
-            .Replace("}", "")
-            .Trim();
+        // Find end marker position
+        int endIndex = value.LastIndexOf('}');
+        
+        // Validate: end marker must be after start marker
+        if (endIndex <= startMarker.Length)
+            return null;
+        
+        // Extract substring between markers and trim whitespace
+        return value.Substring(startMarker.Length, endIndex - startMarker.Length).Trim();
     }
 }

@@ -60,7 +60,8 @@ namespace XamlToHtmlConverter.Rendering
             if (v_StyleRegistry.Count == 0)
                 return string.Empty;
 
-            var sb = new StringBuilder();
+            // Capacity optimized for CSS style block (multiple rules + style tags)
+            var sb = new StringBuilder(1023);
             sb.AppendLine("<style>");
 
             foreach (var kvp in v_StyleRegistry)
@@ -82,7 +83,8 @@ namespace XamlToHtmlConverter.Rendering
         /// <returns>A combined CSS style string ready for use as an HTML style or class attribute value.</returns>
         public string Build(IntermediateRepresentationElement element, LayoutContext context)
         {
-            var sb = new StringBuilder();
+            // Capacity optimized for element CSS rules (typically 200-500 chars)
+            var sb = new StringBuilder(509);
 
             // Canvas container needs position:relative so absolute children are anchored to it
             if (element.Type == "Canvas")

@@ -24,9 +24,30 @@ public sealed class PropertyTriggerHandler : ITriggerHandler
     {
         foreach (var trigger in element.Triggers)
         {
+            // OPTIMIZATION: Check cache for previously evaluated result
+            // Avoids repeated TriggerCssPropertyMapper lookups for triggers processed multiple times
+            if (trigger.CachedCanUseCssRule.HasValue)
+            {
+                if (!trigger.CachedCanUseCssRule.Value)
+                    continue; // Cached as non-CSS-compatible — skip
+
+                var cachedDecl = BuildCssDeclarations(trigger.Setters);
+                if (!string.IsNullOrWhiteSpace(cachedDecl))
+                    output.CssRules.Add($"{elementSelector}{trigger.CachedCssPseudoClass} {{ {cachedDecl} }}");
+                continue;
+            }
+
+            // Cache miss: evaluate pseudo-class and cache result
             if (!TriggerCssPropertyMapper.TryGetCssPseudoClass(
                     trigger.Property, trigger.Value, out var pseudo))
+            {
+                trigger.CachedCanUseCssRule = false;
                 continue; // No CSS equivalent — drop silently.
+            }
+
+            // Cache positive result for future renders
+            trigger.CachedCanUseCssRule = true;
+            trigger.CachedCssPseudoClass = pseudo;
 
             var cssDecl = BuildCssDeclarations(trigger.Setters);
             if (!string.IsNullOrWhiteSpace(cssDecl))
@@ -36,7 +57,8 @@ public sealed class PropertyTriggerHandler : ITriggerHandler
 
     private static string BuildCssDeclarations(Dictionary<string, string> setters)
     {
-        var sb = new StringBuilder();
+        // Capacity optimized for trigger CSS declarations (typically 100-200 chars)
+        var sb = new StringBuilder(255);
 
         foreach (var setter in setters)
         {
@@ -49,7 +71,8 @@ public sealed class PropertyTriggerHandler : ITriggerHandler
 
     private static string SerializeSetters(Dictionary<string, string> setters)
     {
-        var sb = new StringBuilder();
+        // Capacity optimized for setter serialization (medium size)
+        var sb = new StringBuilder(255);
         bool first = true;
 
         foreach (var s in setters)

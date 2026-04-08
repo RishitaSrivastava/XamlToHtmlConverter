@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>XamlToHtmlConverter.Benchmarks.AlgorithmComparisonBenchmarks-20260330-120000</title>
+<title>XamlToHtmlConverter.Benchmarks.AlgorithmComparisonBenchmarks-20260407-150909</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -17,7 +17,7 @@ BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.26200.8037)
 Unknown processor
 .NET SDK=10.0.201
   [Host]     : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
-  Job-QPQEVP : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
+  Job-LVLSQK : .NET 8.0.25 (8.0.2526.11203), X64 RyuJIT AVX2
 </code></pre>
 <pre><code>IterationCount=5  WarmupCount=3  
 </code></pre>
@@ -25,10 +25,10 @@ Unknown processor
 <table>
 <thead><tr><th>                            Method</th><th>  Mean</th><th> Error</th><th>StdDev</th><th>Rank</th><th>Gen0</th><th>Gen1</th><th>Allocated</th>
 </tr>
-</thead><tbody><tr><td>XmlToIrConverterRecursive</td><td>22,339.57 ns</td><td>7,115.676 ns</td><td>1,101.159 ns</td><td>4</td><td>6.9885</td><td>2.2888</td><td>87728 B</td>
-</tr><tr><td>XmlToIrConverterLinqStyle</td><td>18,422.56 ns</td><td>1,420.231 ns</td><td>219.782 ns</td><td>3</td><td>6.3171</td><td>2.0752</td><td>79456 B</td>
-</tr><tr><td>&#39;Binding Parse: Simple&#39;</td><td>14.83 ns</td><td>1.436 ns</td><td>0.373 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
-</tr><tr><td>&#39;Style Registry: Multiple Registrations&#39;</td><td>7,508.52 ns</td><td>1,162.831 ns</td><td>179.949 ns</td><td>2</td><td>0.4044</td><td>-</td><td>5136 B</td>
+</thead><tbody><tr><td>XmlToIrConverterRecursive</td><td>19,562.11 ns</td><td>4,115.793 ns</td><td>1,068.858 ns</td><td>3</td><td>6.4697</td><td>2.1362</td><td>81432 B</td>
+</tr><tr><td>XmlToIrConverterLinqStyle</td><td>19,058.38 ns</td><td>650.236 ns</td><td>168.864 ns</td><td>3</td><td>6.3171</td><td>2.0752</td><td>79456 B</td>
+</tr><tr><td>&#39;Binding Parse: Simple&#39;</td><td>16.24 ns</td><td>1.341 ns</td><td>0.348 ns</td><td>1</td><td>0.0070</td><td>-</td><td>88 B</td>
+</tr><tr><td>&#39;Style Registry: Multiple Registrations&#39;</td><td>7,432.57 ns</td><td>147.853 ns</td><td>38.397 ns</td><td>2</td><td>0.4044</td><td>-</td><td>5136 B</td>
 </tr></tbody></table>
 </body>
 </html>

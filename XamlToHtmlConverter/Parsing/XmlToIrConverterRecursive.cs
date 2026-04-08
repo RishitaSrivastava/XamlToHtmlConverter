@@ -228,9 +228,16 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
                     {
                         var multi = new IntermediateRepresentationMultiTrigger();
 
-                        var conditionsNode = triggerNode
-                            .Elements()
-                            .FirstOrDefault(x => x.Name.LocalName == "MultiTrigger.Conditions");
+                        // Find conditions node without LINQ allocation
+                        XElement? conditionsNode = null;
+                        foreach (var elem in triggerNode.Elements())
+                        {
+                            if (elem.Name.LocalName == "MultiTrigger.Conditions")
+                            {
+                                conditionsNode = elem;
+                                break;
+                            }
+                        }
 
                         if (conditionsNode != null)
                         {
@@ -290,9 +297,16 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
                     {
                         var multiData = new IntermediateRepresentationMultiDataTrigger();
 
-                        var conditionsNode = triggerNode
-                            .Elements()
-                            .FirstOrDefault(x => x.Name.LocalName == "MultiDataTrigger.Conditions");
+                        // Find conditions node without LINQ allocation
+                        XElement? conditionsNode = null;
+                        foreach (var elem in triggerNode.Elements())
+                        {
+                            if (elem.Name.LocalName == "MultiDataTrigger.Conditions")
+                            {
+                                conditionsNode = elem;
+                                break;
+                            }
+                        }
 
                         if (conditionsNode != null)
                         {
@@ -408,7 +422,17 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
             if (style.Name.LocalName != "Style")
                 continue;
 
-            var keyAttr = style.Attributes().FirstOrDefault(a => a.Name.LocalName == "Key");
+            // Find Key attribute without LINQ allocation
+            XAttribute? keyAttr = null;
+            foreach (var attr in style.Attributes())
+            {
+                if (attr.Name.LocalName == "Key")
+                {
+                    keyAttr = attr;
+                    break;
+                }
+            }
+            
             var targetTypeAttr = style.Attribute("TargetType");
             var basedOnAttr = style.Attribute("BasedOn");
 
@@ -423,8 +447,12 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
             if (basedOnAttr != null)
                 styleObject.BasedOn = ExtractStaticResourceKey(basedOnAttr.Value);
 
-            foreach (var setter in style.Elements().Where(e => e.Name.LocalName == "Setter"))
+            // Find and process setters without LINQ allocation
+            foreach (var setter in style.Elements())
             {
+                if (setter.Name.LocalName != "Setter")
+                    continue;
+
                 var propAttr = setter.Attribute("Property");
                 var valueAttr = setter.Attribute("Value");
 
@@ -452,7 +480,10 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
         if (!styleValue.StartsWith("{StaticResource"))
             return;
 
-        var key = styleValue.Replace("{StaticResource", "").Replace("}", "").Trim();
+        var key = ExtractStaticResourceKey(styleValue);
+        if (key == null)
+            return;
+            
         var style = FindResource(element.Parent, key);
         if (style == null)
             return;
@@ -556,16 +587,27 @@ public class XmlToIrConverterRecursive : IXmlToIrConverter
     }
 
     /// <summary>
-    /// Extracts the resource key from a StaticResource markup extension string.
+    /// Extracts the resource key from a StaticResource markup extension string using index-based extraction.
+    /// Optimized to avoid string allocations from multiple Replace() calls.
     /// </summary>
     /// <param name="value">The raw attribute value (e.g., "{StaticResource MyStyle}").</param>
     /// <returns>The extracted key string, or <c>null</c> if the value is not a StaticResource reference.</returns>
     private string? ExtractStaticResourceKey(string value)
     {
-        if (!value.StartsWith("{StaticResource"))
+        const string startMarker = "{StaticResource";
+        
+        if (!value.StartsWith(startMarker))
             return null;
 
-        return value.Replace("{StaticResource", "").Replace("}", "").Trim();
+        // Find end marker position
+        int endIndex = value.LastIndexOf('}');
+        
+        // Validate: end marker must be after start marker
+        if (endIndex <= startMarker.Length)
+            return null;
+        
+        // Extract substring between markers and trim whitespace
+        return value.Substring(startMarker.Length, endIndex - startMarker.Length).Trim();
     }
 
     /// <summary>

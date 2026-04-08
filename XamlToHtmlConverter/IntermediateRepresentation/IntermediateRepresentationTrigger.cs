@@ -29,5 +29,25 @@ public class IntermediateRepresentationTrigger
     /// </summary>
     public Dictionary<string, string> Setters { get; } = new();
 
+    /// <summary>
+    /// Gets or sets a cached flag indicating whether the condition can be expressed as a CSS pseudo-class.
+    /// Set during first rendering pass and reused for subsequent renders.
+    /// </summary>
+    /// <remarks>
+    /// Performance optimization: Avoids repeated TriggerCssPropertyMapper lookups.
+    /// Tri-state: null (not yet evaluated), true (maps to CSS), false (cannot use CSS).
+    /// </remarks>
+    public bool? CachedCanUseCssRule { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pre-computed CSS pseudo-class (e.g., ":hover", ":not(:disabled)").
+    /// Populated during first render pass and reused for subsequent renders.
+    /// </summary>
+    /// <remarks>
+    /// Performance optimization: Eliminates dictionary lookup on every render.
+    /// Only valid when CachedCanUseCssRule is true.
+    /// </remarks>
+    public string? CachedCssPseudoClass { get; set; }
+
     #endregion
 }

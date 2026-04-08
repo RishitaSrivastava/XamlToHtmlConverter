@@ -44,18 +44,40 @@ public sealed class MultiTriggerHandler : ITriggerHandler
         if (trigger.Conditions.Count == 0 || trigger.Setters.Count == 0)
             return false;
 
+        // OPTIMIZATION: Check cache for previously evaluated result
+        // Avoids repeated TriggerCssPropertyMapper lookups for triggers processed multiple times
+        if (trigger.CachedCanUseCssRule.HasValue)
+        {
+            if (!trigger.CachedCanUseCssRule.Value)
+                return false;
+
+            // Cached as CSS-compatible: rebuild rule from cached pseudo-class suffix
+            var cachedDecl = BuildCssDeclarations(trigger.Setters);
+            cssRule = $"{selector}{trigger.CachedCombinedPseudoClass} {{ {cachedDecl} }}";
+            return true;
+        }
+
+        // Cache miss: evaluate conditions and cache result
         var pseudoSuffixes = new List<string>(trigger.Conditions.Count);
 
         foreach (var condition in trigger.Conditions)
         {
             if (!TriggerCssPropertyMapper.TryGetCssPseudoClass(
                     condition.Property, condition.Value, out var pseudo))
+            {
+                // Cache negative result: not all conditions map to CSS
+                trigger.CachedCanUseCssRule = false;
                 return false;
+            }
 
             pseudoSuffixes.Add(pseudo);
         }
 
+        // Cache combined pseudo-classes for future renders
         var combinedPseudo = string.Concat(pseudoSuffixes);
+        trigger.CachedCombinedPseudoClass = combinedPseudo;
+        trigger.CachedCanUseCssRule = true;
+
         var cssDecl = BuildCssDeclarations(trigger.Setters);
 
         cssRule = $"{selector}{combinedPseudo} {{ {cssDecl} }}";
@@ -64,7 +86,8 @@ public sealed class MultiTriggerHandler : ITriggerHandler
 
     private static string BuildCssDeclarations(Dictionary<string, string> setters)
     {
-        var sb = new StringBuilder();
+        // Capacity optimized for multi-trigger CSS declarations (typically 100-200 chars)
+        var sb = new StringBuilder(255);
 
         foreach (var setter in setters)
         {
@@ -77,7 +100,8 @@ public sealed class MultiTriggerHandler : ITriggerHandler
 
     private static string SerializeConditions(List<(string Property, string Value)> conditions)
     {
-        var sb = new StringBuilder();
+        // Capacity optimized for condition serialization (small, ~50-100 chars)
+        var sb = new StringBuilder(127);
         bool first = true;
 
         foreach (var c in conditions)
@@ -92,7 +116,8 @@ public sealed class MultiTriggerHandler : ITriggerHandler
 
     private static string SerializeSetters(Dictionary<string, string> setters)
     {
-        var sb = new StringBuilder();
+        // Capacity optimized for setter serialization (medium, ~100-200 chars)
+        var sb = new StringBuilder(255);
         bool first = true;
 
         foreach (var s in setters)
